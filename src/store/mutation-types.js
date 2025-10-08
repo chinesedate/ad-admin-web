@@ -1,0 +1,1 @@
+export const SET_CHOOSE_LABEL = 'SET_CHOOSE_LABEL'
