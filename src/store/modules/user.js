@@ -14,6 +14,9 @@ const mutations = {
   SET_TOKEN: (state, token) => {
     state.token = token
   },
+  SET_REFRESH_TOKEN: (state, token) => {
+    state.token = token
+  },
   SET_INTRODUCTION: (state, introduction) => {
     state.introduction = introduction
   },
@@ -35,13 +38,13 @@ const actions = {
     return new Promise((resolve, reject) => {
       login({username: username.trim(), password: password, verifyCode: verifyCode}).then(res => {
         const {data} = res
-        console.log(data);
+        console.log(data.data);
         // 存储用户token
-        commit('SET_TOKEN', data.data.token)
-        setToken(data.data.token)
+        commit('SET_TOKEN', data.data.access_token)
+        setToken(data.data.access_token)
         // 存储refresh token
-        commit('SET_REFRESH_TOKEN', data.data.token)
-        setRefreshToken(data.data.refreshToken)
+        commit('SET_REFRESH_TOKEN', data.data.access_token)
+        setRefreshToken(data.data.access_token)
         resolve()
       }).catch(error => {
         reject(error)

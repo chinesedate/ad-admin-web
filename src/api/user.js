@@ -10,7 +10,7 @@ export function login({username, password}) {
     // 添加验证码
     // form.append("verifyCode", verifyCode);
     return request({
-        url: '/api/adm/login',
+        url: '/track/admin/login',
         method: 'post',
         data: form,
         headers: {"content-type": "multipart/form-data"}
@@ -27,7 +27,7 @@ export function getInfo(token) {
 
 export function logout() {
     return request({
-        url: '/api/adm/logout',
+        url: '/track/admin/logout',
         method: 'post'
     })
 }

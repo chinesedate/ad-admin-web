@@ -17,7 +17,7 @@ const routes = [
       {
         path: '',
         name: 'IndexHome',
-        component: () => import('@/views/home/index')
+        component: () => import('@/views/ad/ad_data')
       }
     ]
   },
@@ -29,6 +29,17 @@ const routes = [
         path: '',
         name: 'Home',
         component: () => import('@/views/home/index')
+      }
+    ]
+  },
+  {
+    path: '/ad_data',
+    component: Layout,
+    children: [
+      {
+        path: '',
+        name: 'AdData',
+        component: () => import('@/views/ad/ad_data.vue')
       }
     ]
   },

@@ -2,32 +2,32 @@
   <div class="login-page">
     <div class="login-header">
       <router-link to="/">
-        <div><span class="logo-content">技术问答社区-管理平台</span></div>
+        <div><span class="logo-content">瑞樟广告平台</span></div>
       </router-link>
     </div>
     <div class="login-main">
       <div class="login-main-header">
         <span class="login-main-title">
-          邮箱登录
+          用户登录
         </span>
       </div>
       <el-form :model="loginRuleForm" ref="loginRuleForm" :rules="loginRules" label-position="top"
                label-width="100px"
                class="demo-dynamic">
         <el-form-item
-          prop="email"
+          prop="account"
         >
-          <el-input v-model="loginRuleForm.email" placeholder="请输入邮箱" clearable></el-input>
+          <el-input v-model="loginRuleForm.account" placeholder="请输入账号" clearable></el-input>
         </el-form-item>
-<!--        <el-form-item prop="verifyCode">-->
-<!--          <el-input-->
-<!--            placeholder="验证码"-->
-<!--            v-model="loginRuleForm.verifyCode" clearable>-->
-<!--            <el-button type="text" @click="fetchVerifyCode" :disabled="this.fetchVerifyCodeTimer !== -1"-->
-<!--                       slot="suffix">{{fetchVerifyCodeTip}}-->
-<!--            </el-button>-->
-<!--          </el-input>-->
-<!--        </el-form-item>-->
+        <!--        <el-form-item prop="verifyCode">-->
+        <!--          <el-input-->
+        <!--            placeholder="验证码"-->
+        <!--            v-model="loginRuleForm.verifyCode" clearable>-->
+        <!--            <el-button type="text" @click="fetchVerifyCode" :disabled="this.fetchVerifyCodeTimer !== -1"-->
+        <!--                       slot="suffix">{{fetchVerifyCodeTip}}-->
+        <!--            </el-button>-->
+        <!--          </el-input>-->
+        <!--        </el-form-item>-->
         <el-form-item prop="pass">
           <el-input type="password" v-model="loginRuleForm.pass" placeholder="请输入密码" autocomplete="off"
                     @keyup.enter.native="login('loginRuleForm')"
@@ -51,14 +51,14 @@
     data() {
       return {
         loginRuleForm: {
-          email: '',
+          account: '',
           // verifyCode: '',
           pass: '',
         },
         loginRules: {
-          email: [
-            {required: true, message: '请输入邮箱地址', trigger: 'blur'},
-            {type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur']}
+          account: [
+            {required: true, message: '请输入账号', trigger: 'blur'},
+            {min: 4, max: 16, message: '账号长度4~16', trigger: ['blur']}
           ],
           // verifyCode: [
           //   {required: true, message: '请输入验证码', trigger: ['blur', 'change']}
@@ -112,7 +112,7 @@
         this.$refs[formName].validate((valid) => {
           if (valid) {
             this.$store.dispatch('user/login', {
-              username: this.loginRuleForm.email,
+              username: this.loginRuleForm.account,
               password: md5(this.loginRuleForm.pass),
               // verifyCode:this.loginRuleForm.verifyCode
             }).then(() => this.$router.push("/")).catch(error => {

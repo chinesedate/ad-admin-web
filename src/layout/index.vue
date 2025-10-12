@@ -2,7 +2,7 @@
   <el-container style="width: 100%;height: 100%">
     <el-header class="header-wrapper">
       <div class="header-content" @click="headerClick">
-        <span>审核平台</span>
+        <span>广告平台</span>
       </div>
       <div class="header-menu">
         <div v-if="isLogin" class="header-menu-item">
@@ -38,35 +38,38 @@
       <el-aside class="aside-menu" width="140px">
         <ul class="menu-list">
           <li class="menu-item">
-            <router-link to="/home">主页</router-link>
-          </li>
-          <li class="menu-item">
-            <router-link to="/qa-info-audit">问答审核</router-link>
-          </li>
-          <li class="menu-item">
-            <router-link to="/qa-answer-audit">问答回复审核</router-link>
-          </li>
-          <li class="menu-item">
-            <router-link to="/qa-tab-audit">标签页审核</router-link>
-          </li>
-          <li class="menu-item">
-            <router-link to="/qa-tool-audit">问答工具审核</router-link>
+            <router-link to="/ad_data">广告数据</router-link>
           </li>
 <!--          <li class="menu-item">-->
-<!--            <router-link to="/tool-audit">工具审核</router-link>-->
+<!--            <router-link to="/home">主页</router-link>-->
 <!--          </li>-->
 <!--          <li class="menu-item">-->
-<!--            <router-link to="/tool-edit">工具编辑</router-link>-->
+<!--            <router-link to="/qa-info-audit">问答审核</router-link>-->
 <!--          </li>-->
-          <li class="menu-item">
-            <router-link to="/modify-data-audit">编辑数据</router-link>
-          </li>
 <!--          <li class="menu-item">-->
-<!--            <router-link to="/user-edit">用户审核</router-link>-->
+<!--            <router-link to="/qa-answer-audit">问答回复审核</router-link>-->
 <!--          </li>-->
-          <li class="menu-item">
-            <router-link to="/name-manage">名称管理</router-link>
-          </li>
+<!--          <li class="menu-item">-->
+<!--            <router-link to="/qa-tab-audit">标签页审核</router-link>-->
+<!--          </li>-->
+<!--          <li class="menu-item">-->
+<!--            <router-link to="/qa-tool-audit">问答工具审核</router-link>-->
+<!--          </li>-->
+          <!--          <li class="menu-item">-->
+          <!--            <router-link to="/tool-audit">工具审核</router-link>-->
+          <!--          </li>-->
+          <!--          <li class="menu-item">-->
+          <!--            <router-link to="/tool-edit">工具编辑</router-link>-->
+          <!--          </li>-->
+<!--          <li class="menu-item">-->
+<!--            <router-link to="/modify-data-audit">编辑数据</router-link>-->
+<!--          </li>-->
+          <!--          <li class="menu-item">-->
+          <!--            <router-link to="/user-edit">用户审核</router-link>-->
+          <!--          </li>-->
+<!--          <li class="menu-item">-->
+<!--            <router-link to="/name-manage">名称管理</router-link>-->
+<!--          </li>-->
           <!--          <li class="menu-item">-->
           <!--            <router-link to="/tool-category-audit">工具分类审核</router-link>-->
           <!--          </li>-->

@@ -48,7 +48,7 @@ service.interceptors.response.use(
     // return response;
 
     // if the custom code is not 20000, it is judged as an error.
-    if (res.code !== '0') {
+    if (res.code !== 0) {
       Message({
         showClose: true,
         message: res.message || 'Error',
@@ -85,7 +85,7 @@ service.interceptors.response.use(
             cancelButtonText: '前往登录页',
             type: 'warning'
           }).then(
-            () => router.push('/home')
+            () => router.push('/')
           ).catch(() => router.push('/login'))
         }
       )
