@@ -521,7 +521,7 @@ VueRouter.prototype.push = function push(location, onResolve, onReject) {
 }
 const createRouter = () => new VueRouter({
   mode: "history",
-  base: '/admin',
+  // base: '/admin',
   routes,
   // eslint-disable-next-line no-unused-vars
   scrollBehavior(to, from, savedPosition) {

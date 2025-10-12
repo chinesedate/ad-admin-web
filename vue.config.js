@@ -13,7 +13,8 @@ function resolve(dir) {
 // const port = process.env.port || process.env.npm_config_port || 8084 // dev port
 
 module.exports = {
-  publicPath: process.env.NODE_ENV === "production" ? "/admin" : "/",
+  // publicPath: process.env.NODE_ENV === "production" ? "/admin" : "/",
+  publicPath: "/",
   configureWebpack: {
     resolve: {
       alias: {
