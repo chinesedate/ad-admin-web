@@ -12,6 +12,14 @@ export function pageListAdData(data) {
   })
 }
 
+export function fetchAdDataPickInfo(data) {
+  return request({
+    url: '/track/admin/ad-data-pick',
+    method: 'post',
+    data
+  })
+}
+
 /**
  * 获取待审核问题信息
  * @param id 待审核问题id
