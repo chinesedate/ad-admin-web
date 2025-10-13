@@ -210,6 +210,9 @@
       },
       handleDatePick() {
         this.pageNum = 1;
+        this.channel_id_options=[];
+        this.customer_id_options=[];
+        this.app_id_options=[];
         this.channel_id_value = [];
         this.customer_id_value = [];
         this.app_id_value = [];
