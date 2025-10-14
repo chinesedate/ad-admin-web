@@ -221,8 +221,10 @@
       },
       listAdDataPickInfo() {
         // 查询广告数据筛选信息
-        let start_date = this.shanghaiTime(this.date_list[0])
-        let end_date = this.shanghaiTime(this.date_list[1])
+        let query_start_date = new Date(this.date_list[0])
+        let query_end_date = new Date(this.date_list[1])
+        let start_date = this.shanghaiTime(query_start_date)
+        let end_date = this.shanghaiTime(query_end_date)
         fetchAdDataPickInfo({
             start_date_time: start_date, end_date_time: end_date
           }
