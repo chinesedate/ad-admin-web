@@ -153,6 +153,23 @@
               picker.$emit('pick', [start, end]);
             }
           }, {
+            text: '昨天',
+            onClick(picker) {
+              const end = new Date();
+              const start = new Date();
+              start.setTime(start.getTime() - 3600 * 1000 * 24);
+              end.setTime(start.getTime() - 3600 * 1000 * 24);
+              picker.$emit('pick', [start, end]);
+            }
+          }, {
+            text: '最近三天',
+            onClick(picker) {
+              const end = new Date();
+              const start = new Date();
+              start.setTime(start.getTime() - 3600 * 1000 * 24 * 3);
+              picker.$emit('pick', [start, end]);
+            }
+          }, , {
             text: '最近一周',
             onClick(picker) {
               const end = new Date();
@@ -210,9 +227,9 @@
       },
       handleDatePick() {
         this.pageNum = 1;
-        this.channel_id_options=[];
-        this.customer_id_options=[];
-        this.app_id_options=[];
+        this.channel_id_options = [];
+        this.customer_id_options = [];
+        this.app_id_options = [];
         this.channel_id_value = [];
         this.customer_id_value = [];
         this.app_id_value = [];
