@@ -76,6 +76,9 @@
               :clearable="false">
             </el-date-picker>
           </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="handleDataExport" plain>数据导出</el-button>
+          </el-form-item>
         </el-form>
         <el-table
           :data="tableData"
@@ -328,6 +331,14 @@
           }
         );
       },
+      handleDataExport() {
+        // 处理数据导出
+        this.$notify({
+          title: '提示',
+          message: '功能开发中',
+          duration: 4500
+        });
+      },
       shanghaiTime(date) {
         // 上海时间 = UTC时间 + 8小时
         date.setHours(date.getHours() + 8)
@@ -390,8 +401,9 @@
   }
 
   .page-wrapper {
-    position: absolute;
-    bottom: 0;
+    //position: absolute;
+    //bottom: 0;
+    margin-top: 20px;
     width: 100%;
     display: flex;
     justify-content: center;
