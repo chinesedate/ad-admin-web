@@ -1,5 +1,5 @@
 import axios from 'axios'
-import {MessageBox, Message} from 'element-ui'
+import {Message, MessageBox} from 'element-ui'
 import store from '@/store'
 import {getToken} from '@/utils/auth'
 import router from "@/router";
@@ -44,71 +44,91 @@ service.interceptors.response.use(
    * You can also judge the status by HTTP Status Code
    */
   response => {
+    let res = response.data
     // 判断是否为文件下载请求
-    if (response.config.responseType === 'blob' ||
-      response.headers['content-type'] === 'application/octet-stream;charset=utf-8' ||
-      response.headers['content-type'] === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    ) {
-      const fileContentType = response.headers['content-type']
-      // 创建 Blob 对象
-      const blob = new Blob([response.data], {
-        type: fileContentType
-      });
-
-      // 从 Content-Disposition 头中提取文件名
-      const contentDisposition = response.headers['content-disposition'];
-      let fileName = 'download.xlsx';
-
-      if (contentDisposition) {
-        const fileNameMatch = contentDisposition.match(/filename=(.*)/);
-        if (fileNameMatch.length === 2) {
-          fileName = fileNameMatch[1].replace(/"/g, '');
-        }
-      }
-
-      // 创建下载链接并触发下载
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = fileName;
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
-
-      return response.data;
-    }
-
-    const res = response.data
-    // return response;
-
-    // if the custom code is not 20000, it is judged as an error.
-    if (res.code !== 0) {
-      Message({
-        showClose: true,
-        message: res.message || 'Error',
-        type: 'error',
-        offset: 100,
-        duration: 3 * 1000
-      })
-
-      // 50008: Illegal token; 50012: Other clients logged in; 50014: Token expired;
-      if (res.code === 50008 || res.code === 50012 || res.code === 50014) {
-        // to re-login
-        MessageBox.confirm('You have been logged out, you can cancel to stay on this page, or log in again', 'Confirm logout', {
-          confirmButtonText: 'Re-Login',
-          cancelButtonText: 'Cancel',
-          type: 'warning'
-        }).then(() => {
-          store.dispatch('user/resetToken').then(() => {
-            location.reload()
+    if (response.config.responseType === 'blob') {
+      const contentType = response.headers['content-type']
+      if (contentType?.includes('application/json')) {
+        // 尝试解析为JSON，解析成功表示下载文件接口返回的是json结果，不是文件流
+        parseBlobAsJson(response.data).then(jsonResult => {
+          // 统一错误处理
+          Message({
+            showClose: true,
+            message: jsonResult.message || 'Error',
+            type: 'error',
+            offset: 100,
+            duration: 3 * 1000
           })
-        })
+        }).catch(errorData => {
+          // 统一错误处理
+          Message({
+            showClose: true,
+            message: errorData.message || 'Error',
+            type: 'error',
+            offset: 100,
+            duration: 3 * 1000
+          })
+        });
+      } else {
+        // 处理文件下载
+        // 创建 Blob 对象
+        const blob = new Blob([response.data], {
+          type: contentType
+        });
+
+        // 从 Content-Disposition 头中提取文件名
+        const contentDisposition = response.headers['content-disposition'];
+        let fileName = 'download.xlsx';
+
+        if (contentDisposition) {
+          const fileNameMatch = contentDisposition.match(/filename=(.*)/);
+          if (fileNameMatch.length === 2) {
+            fileName = fileNameMatch[1].replace(/"/g, '');
+          }
+        }
+
+        // 创建下载链接并触发下载
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = fileName;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
+
+        return response.data;
       }
-      return Promise.reject(new Error(res.message || 'Error'))
     } else {
-      return response
+      // if the custom code is not 20000, it is judged as an error.
+      if (res.code !== 0) {
+        console.log(res)
+        Message({
+          showClose: true,
+          message: res.message || 'Error',
+          type: 'error',
+          offset: 100,
+          duration: 3 * 1000
+        })
+
+        // 50008: Illegal token; 50012: Other clients logged in; 50014: Token expired;
+        if (res.code === 50008 || res.code === 50012 || res.code === 50014) {
+          // to re-login
+          MessageBox.confirm('You have been logged out, you can cancel to stay on this page, or log in again', 'Confirm logout', {
+            confirmButtonText: 'Re-Login',
+            cancelButtonText: 'Cancel',
+            type: 'warning'
+          }).then(() => {
+            store.dispatch('user/resetToken').then(() => {
+              location.reload()
+            })
+          })
+        }
+        return Promise.reject(new Error(res.message || 'Error'))
+      } else {
+        return response
+      }
     }
   },
   error => {
@@ -138,5 +158,26 @@ service.interceptors.response.use(
     return Promise.reject(error)
   }
 )
+
+/**
+ * 将Blob解析为JSON
+ * @param {Blob} blob Blob对象
+ * @returns {Promise<Object>} 解析后的JSON数据
+ */
+function parseBlobAsJson(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const jsonData = JSON.parse(reader.result);
+        resolve(jsonData);
+      } catch (error) {
+        reject(new Error('解析错误响应失败'));
+      }
+    };
+    reader.onerror = () => reject(new Error('读取Blob数据失败'));
+    reader.readAsText(blob);
+  });
+}
 
 export default service
