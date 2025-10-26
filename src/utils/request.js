@@ -44,6 +44,42 @@ service.interceptors.response.use(
    * You can also judge the status by HTTP Status Code
    */
   response => {
+    // 判断是否为文件下载请求
+    if (response.config.responseType === 'blob' ||
+      response.headers['content-type'] === 'application/octet-stream;charset=utf-8' ||
+      response.headers['content-type'] === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ) {
+      const fileContentType = response.headers['content-type']
+      // 创建 Blob 对象
+      const blob = new Blob([response.data], {
+        type: fileContentType
+      });
+
+      // 从 Content-Disposition 头中提取文件名
+      const contentDisposition = response.headers['content-disposition'];
+      let fileName = 'download.xlsx';
+
+      if (contentDisposition) {
+        const fileNameMatch = contentDisposition.match(/filename=(.*)/);
+        if (fileNameMatch.length === 2) {
+          fileName = fileNameMatch[1].replace(/"/g, '');
+        }
+      }
+
+      // 创建下载链接并触发下载
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = fileName;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+
+      return response.data;
+    }
+
     const res = response.data
     // return response;
 
@@ -80,23 +116,25 @@ service.interceptors.response.use(
       store.dispatch('user/resetToken').then(
         () => {
           // 提示用户登录已过期
-          MessageBox.confirm('当前用户登录已过期，可以选择前往首页或前往登录页', '登录已过期', {
-            confirmButtonText: '前往首页',
-            cancelButtonText: '前往登录页',
+          MessageBox.confirm('当前用户登录已过期，可以选择前往登录页', '登录已过期', {
+            confirmButtonText: '前往登录页',
+            cancelButtonText: '取消',
             type: 'warning'
           }).then(
-            () => router.push('/')
-          ).catch(() => router.push('/login'))
+            () => router.push('/login')
+          ).catch(
+            // () => router.push('/login')
+          )
         }
       )
-
+    } else {
+      // console.log('err' + error) // for debug
+      Message({
+        message: error.message,
+        type: 'error',
+        duration: 5 * 1000
+      })
     }
-    console.log('err' + error) // for debug
-    Message({
-      message: error.message,
-      type: 'error',
-      duration: 5 * 1000
-    })
     return Promise.reject(error)
   }
 )

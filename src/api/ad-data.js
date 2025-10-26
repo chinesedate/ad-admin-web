@@ -20,6 +20,15 @@ export function fetchAdDataPickInfo(data) {
   })
 }
 
+export function exportAdData(data) {
+  return request({
+    url: '/track/admin/ad-data/export',
+    method: 'post',
+    responseType: 'blob',
+    data
+  })
+}
+
 /**
  * 获取待审核问题信息
  * @param id 待审核问题id

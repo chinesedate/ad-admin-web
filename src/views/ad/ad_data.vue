@@ -135,7 +135,7 @@
 </template>
 
 <script>
-  import {pageListAdData, fetchAdDataPickInfo} from "@/api/ad-data";
+  import {pageListAdData, fetchAdDataPickInfo, exportAdData} from "@/api/ad-data";
 
   export default {
     name: "ad_data",
@@ -333,11 +333,26 @@
       },
       handleDataExport() {
         // 处理数据导出
-        this.$notify({
-          title: '提示',
-          message: '功能开发中',
-          duration: 4500
-        });
+        // this.$notify({
+        //   title: '提示',
+        //   message: '功能开发中',
+        //   duration: 4500
+        // });
+        let query_start_date = new Date(this.date_list[0])
+        let query_end_date = new Date(this.date_list[1])
+        let start_date = this.shanghaiTime(query_start_date)
+        let end_date = this.shanghaiTime(query_end_date)
+        let ad_data_query_param = {
+          start_date_time: start_date,
+          end_date_time: end_date,
+          channel_id_list: this.channel_id_value,
+          customer_id_list: this.customer_id_value,
+          app_id_list: this.app_id_value
+        }
+        if (this.ad_type_value !== '') {
+          ad_data_query_param.ad_type = this.ad_type_value
+        }
+        exportAdData(ad_data_query_param)
       },
       shanghaiTime(date) {
         // 上海时间 = UTC时间 + 8小时
