@@ -133,20 +133,23 @@ service.interceptors.response.use(
   },
   error => {
     if (error.response.status === 401) {
-      store.dispatch('user/resetToken').then(
-        () => {
-          // 提示用户登录已过期
-          MessageBox.confirm('当前用户登录已过期，可以选择前往登录页', '登录已过期', {
-            confirmButtonText: '前往登录页',
-            cancelButtonText: '取消',
-            type: 'warning'
-          }).then(
-            () => router.push('/login')
-          ).catch(
-            // () => router.push('/login')
-          )
-        }
-      )
+      // 仅仅在token不为空时，执行提示逻辑，避免多个接口401时提醒多次
+      if (store.getters.token) {
+        store.dispatch('user/resetToken').then(
+          () => {
+            // 提示用户登录已过期
+            MessageBox.confirm('当前用户登录已过期，可以选择前往登录页', '登录已过期', {
+              confirmButtonText: '前往登录页',
+              cancelButtonText: '取消',
+              type: 'warning'
+            }).then(
+              () => router.push('/login')
+            ).catch(
+              // () => router.push('/login')
+            )
+          }
+        )
+      }
     } else {
       // console.log('err' + error) // for debug
       Message({
