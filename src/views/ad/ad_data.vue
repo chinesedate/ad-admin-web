@@ -115,6 +115,10 @@
             prop="ad_num"
             label="数量">
           </el-table-column>
+          <el-table-column
+            prop="conversion_rate"
+            label="回调有效率">
+          </el-table-column>
         </el-table>
         <div class="page-wrapper">
           <el-pagination class="page-pagination"
