@@ -77,6 +77,16 @@
             </el-date-picker>
           </el-form-item>
           <el-form-item>
+            <el-button @click="handleTableColumnVisible" plain>
+              <span v-if="hideTableColum">
+                显示所有列
+              </span>
+              <span v-else>
+                收起部分列
+              </span>
+            </el-button>
+          </el-form-item>
+          <el-form-item>
             <el-button type="primary" @click="handleDataExport" plain>数据导出</el-button>
           </el-form-item>
         </el-form>
@@ -116,6 +126,7 @@
             label="数量">
           </el-table-column>
           <el-table-column
+            v-if="!hideTableColum"
             prop="conversion_rate"
             label="回调有效率">
           </el-table-column>
@@ -150,6 +161,7 @@
         total: 0,
         hasNext: false,
         briefIntroduction: '',
+        hideTableColum: true,
         // 日期选择信息
         pickerOptions: {
           shortcuts: [{
@@ -229,6 +241,10 @@
       // 'viewer': Viewer
     },
     methods: {
+      handleTableColumnVisible() {
+        // 切换隐藏列
+        this.hideTableColum = !this.hideTableColum;
+      },
       handlePageChange() {
         this.listAdData()
       },
