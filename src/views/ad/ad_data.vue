@@ -14,6 +14,26 @@
               </el-option>
             </el-select>
           </el-form-item>
+          <el-form-item class="pick-form-item" label="请求状态">
+            <el-select v-model="ad_status_value"
+                       filterable
+                       @change="handleAdDataPickChange"
+                       multiple
+                       collapse-tags
+                       placeholder="请选择">
+              <el-option-group
+                v-for="group in ad_status_options"
+                :key="group.label"
+                :label="group.label">
+                <el-option
+                  v-for="item in group.options"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value">
+                </el-option>
+              </el-option-group>
+            </el-select>
+          </el-form-item>
           <el-form-item class="pick-form-item" label="渠道ID">
             <el-select
               v-model="channel_id_value"
@@ -92,7 +112,9 @@
         </el-form>
         <el-table
           :data="tableData"
-          stripe
+          ref="adDataTable"
+          row-key="key_id"
+          :row-class-name="tableRowClassName"
           style="width: 100%">
           <el-table-column
             prop="ad_day"
@@ -103,7 +125,10 @@
             prop="ad_type"
             label="数据类型">
           </el-table-column>
-
+          <el-table-column
+            prop="ad_status"
+            label="请求状态">
+          </el-table-column>
           <el-table-column
             prop="channel_id"
             label="渠道ID"
@@ -227,6 +252,30 @@
         }],
         // 广告数据类型
         ad_type_value: '',
+        ad_status_options: [{
+          label: '点击',
+          options: [{
+            value: 1,
+            label: '失败'
+          }, {
+            value: 2,
+            label: '成功'
+          }]
+        }, {
+          label: '回调',
+          options: [{
+            value: 3,
+            label: '回调'
+          }, {
+            value: 4,
+            label: '类型未匹配'
+          }, {
+            value: 5,
+            label: '扣量'
+          }]
+        }],
+        // 广告状态值
+        ad_status_value: [],
         // 广告数据列表
         tableData: [],
         channel_id_options: [],
@@ -241,6 +290,14 @@
       // 'viewer': Viewer
     },
     methods: {
+      tableRowClassName({row}) {
+        // 给部分行添加颜色区别
+        let row_class_name = ''
+        if (row.data_new === true) {
+          return 'warning-row'
+        }
+        return row_class_name;
+      },
       handleTableColumnVisible() {
         // 切换隐藏列
         this.hideTableColum = !this.hideTableColum;
@@ -332,7 +389,8 @@
           end_date_time: end_date,
           channel_id_list: this.channel_id_value,
           customer_id_list: this.customer_id_value,
-          app_id_list: this.app_id_value
+          app_id_list: this.app_id_value,
+          ad_status_list: this.ad_status_value
         }
         if (this.ad_type_value !== '') {
           ad_data_query_param.ad_type = this.ad_type_value
@@ -345,8 +403,30 @@
         ).then(res => {
             if (res.data.data != null) {
               this.tableData = res.data.data.list;
+              let is_new = true;
+              let row_key = "";
+              for (let rowData of this.tableData) {
+                let current_row_key = rowData.ad_type + "_" + rowData.channel_id + "_" + rowData.customer_id + "_" + rowData.app_id + "_" + rowData.action_type;
+                if (row_key === current_row_key) {
+                  rowData.data_new = is_new;
+                } else {
+                  is_new = !is_new
+                  rowData.data_new = is_new;
+                }
+                rowData.key_id = rowData.ad_day + "_" + rowData.ad_type + "_" + rowData.ad_status + "_" + rowData.channel_id + "_" + rowData.customer_id + "_" + rowData.app_id + "_" + rowData.action_type;
+
+                row_key = current_row_key;
+                // console.log(rowData.data_new)
+              }
               this.total = res.data.data.total;
               this.hasNext = res.data.data.hasNext;
+              // // 数据切换后立即刷新表格
+              // this.$nextTick(() => {
+              //   this.$refs.adDataTable.doLayout && this.$refs.adDataTable.doLayout()
+              // });
+              // this.$nextTick(() => {
+              //   this.$forceUpdate()
+              // })
             }
           }
         );
@@ -470,5 +550,9 @@
 
   .tool-content {
     cursor: pointer;
+  }
+
+  ::v-deep .el-table .warning-row td{
+    background-color: oldlace !important;
   }
 </style>
