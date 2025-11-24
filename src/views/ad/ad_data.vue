@@ -265,7 +265,7 @@
           label: '回调',
           options: [{
             value: 3,
-            label: '回调'
+            label: '有效'
           }, {
             value: 4,
             label: '类型未匹配'
