@@ -20,6 +20,39 @@ export function fetchAdDataPickInfo(data) {
   })
 }
 
+/**
+ * 查询广告渠道信息列表
+ */
+export function pageListAdChannel(data) {
+  return request({
+    url: '/track/admin/ad-channel-list',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 获取广告渠道信息筛选列表
+ */
+export function fetchAdChannelPickInfo(data) {
+  return request({
+    url: '/track/admin/ad-channel-pick',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 更新广告渠道信息
+ */
+export function saveAdChannelInfo(data) {
+  return request({
+    url: '/track/admin/ad-channel',
+    method: 'post',
+    data
+  })
+}
+
 export function exportAdData(data) {
   return request({
     url: '/track/admin/ad-data/export',

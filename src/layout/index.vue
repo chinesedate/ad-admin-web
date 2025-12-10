@@ -37,39 +37,44 @@
     <el-container>
       <el-aside class="aside-menu" width="140px">
         <ul class="menu-list">
-          <li class="menu-item">
-            <router-link to="/ad_data">广告数据</router-link>
+          <li :class="['menu-item',activeIndex === 'ad-data'? 'item-selected':'']"
+              @click="handleMenuItemClick('ad-data')">
+            <span class="menu-item-content">广告数据</span>
           </li>
-<!--          <li class="menu-item">-->
-<!--            <router-link to="/home">主页</router-link>-->
-<!--          </li>-->
-<!--          <li class="menu-item">-->
-<!--            <router-link to="/qa-info-audit">问答审核</router-link>-->
-<!--          </li>-->
-<!--          <li class="menu-item">-->
-<!--            <router-link to="/qa-answer-audit">问答回复审核</router-link>-->
-<!--          </li>-->
-<!--          <li class="menu-item">-->
-<!--            <router-link to="/qa-tab-audit">标签页审核</router-link>-->
-<!--          </li>-->
-<!--          <li class="menu-item">-->
-<!--            <router-link to="/qa-tool-audit">问答工具审核</router-link>-->
-<!--          </li>-->
+          <li :class="['menu-item',activeIndex === 'ad-channel'? 'item-selected':'']"
+              @click="handleMenuItemClick('ad-channel')">
+            <span class="menu-item-content">渠道信息</span>
+          </li>
+          <!--          <li class="menu-item">-->
+          <!--            <router-link to="/home">主页</router-link>-->
+          <!--          </li>-->
+          <!--          <li class="menu-item">-->
+          <!--            <router-link to="/qa-info-audit">问答审核</router-link>-->
+          <!--          </li>-->
+          <!--          <li class="menu-item">-->
+          <!--            <router-link to="/qa-answer-audit">问答回复审核</router-link>-->
+          <!--          </li>-->
+          <!--          <li class="menu-item">-->
+          <!--            <router-link to="/qa-tab-audit">标签页审核</router-link>-->
+          <!--          </li>-->
+          <!--          <li class="menu-item">-->
+          <!--            <router-link to="/qa-tool-audit">问答工具审核</router-link>-->
+          <!--          </li>-->
           <!--          <li class="menu-item">-->
           <!--            <router-link to="/tool-audit">工具审核</router-link>-->
           <!--          </li>-->
           <!--          <li class="menu-item">-->
           <!--            <router-link to="/tool-edit">工具编辑</router-link>-->
           <!--          </li>-->
-<!--          <li class="menu-item">-->
-<!--            <router-link to="/modify-data-audit">编辑数据</router-link>-->
-<!--          </li>-->
+          <!--          <li class="menu-item">-->
+          <!--            <router-link to="/modify-data-audit">编辑数据</router-link>-->
+          <!--          </li>-->
           <!--          <li class="menu-item">-->
           <!--            <router-link to="/user-edit">用户审核</router-link>-->
           <!--          </li>-->
-<!--          <li class="menu-item">-->
-<!--            <router-link to="/name-manage">名称管理</router-link>-->
-<!--          </li>-->
+          <!--          <li class="menu-item">-->
+          <!--            <router-link to="/name-manage">名称管理</router-link>-->
+          <!--          </li>-->
           <!--          <li class="menu-item">-->
           <!--            <router-link to="/tool-category-audit">工具分类审核</router-link>-->
           <!--          </li>-->
@@ -98,9 +103,15 @@
 
   export default {
     name: "index",
+    props: {
+      menuIndex: {
+        type: String,
+        default: 'ad-data'
+      }
+    },
     data() {
       return {
-        activeIndex: ''
+        activeIndex: this.menuIndex
       };
     },
     computed: {
@@ -115,7 +126,19 @@
       },
       handleLogout() {
         this.$store.dispatch('user/logout');
-      }
+      },
+      /**
+       * 处理菜单点击事件
+       * @param menuIndex
+       */
+      handleMenuItemClick(menuIndex) {
+        this.activeIndex = menuIndex;
+        if (menuIndex === 'ad-data') {
+          this.$router.push('/ad_data');
+        } else if (menuIndex === 'ad-channel') {
+          this.$router.push('/ad_channel');
+        }
+      },
     },
     mounted() {
 
@@ -165,7 +188,15 @@
   }
 
   .menu-item {
-    padding-bottom: 10px;
+    padding: 10px 0;
+  }
+
+  .menu-item-content {
+    cursor: pointer;
+  }
+
+  .item-selected.item-selected .menu-item-content {
+    color: #409EFF;
   }
 
   .el-dropdown-link {

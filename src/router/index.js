@@ -41,7 +41,24 @@ const routes = [
         name: 'AdData',
         component: () => import('@/views/ad/ad_data.vue')
       }
-    ]
+    ],
+    props: {
+      menuIndex: 'ad-data'
+    }
+  },
+  {
+    path: '/ad_channel',
+    component: Layout,
+    children: [
+      {
+        path: '',
+        name: 'AdChannel',
+        component: () => import('@/views/ad/ad_channel.vue')
+      }
+    ],
+    props: {
+      menuIndex: 'ad-channel'
+    }
   },
   // {
   //   path: '/',

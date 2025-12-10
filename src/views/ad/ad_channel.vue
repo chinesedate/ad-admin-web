@@ -2,38 +2,8 @@
   <div class="ad-data-wrapper">
     <div class="ad-data-list-content">
       <div class="ad-data-list">
-        <div class="ad-data-list-header">数据列表</div>
+        <div class="ad-data-list-header">渠道信息列表</div>
         <el-form :inline="true" class="pick-form-inline">
-          <el-form-item class="pick-form-item" label="数据类型">
-            <el-select v-model="ad_type_value" @change="handleAdDataPickChange" clearable placeholder="选择数据类型">
-              <el-option
-                v-for="item in ad_type_options"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value">
-              </el-option>
-            </el-select>
-          </el-form-item>
-          <el-form-item class="pick-form-item" label="请求状态">
-            <el-select v-model="ad_status_value"
-                       filterable
-                       @change="handleAdDataPickChange"
-                       multiple
-                       collapse-tags
-                       placeholder="请选择">
-              <el-option-group
-                v-for="group in ad_status_options"
-                :key="group.label"
-                :label="group.label">
-                <el-option
-                  v-for="item in group.options"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value">
-                </el-option>
-              </el-option-group>
-            </el-select>
-          </el-form-item>
           <el-form-item class="pick-form-item" label="渠道ID">
             <el-select
               v-model="channel_id_value"
@@ -96,39 +66,14 @@
               :clearable="false">
             </el-date-picker>
           </el-form-item>
-          <el-form-item>
-            <el-button @click="handleTableColumnVisible" plain>
-              <span v-if="hideTableColum">
-                显示所有列
-              </span>
-              <span v-else>
-                收起部分列
-              </span>
-            </el-button>
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" @click="handleDataExport" plain>数据导出</el-button>
-          </el-form-item>
         </el-form>
         <el-table
           :data="tableData"
           ref="adDataTable"
           row-key="key_id"
-          :row-class-name="tableRowClassName"
+          @cell-click="handleCellClick"
+          stripe
           style="width: 100%">
-          <el-table-column
-            prop="ad_day"
-            label="日期"
-            width="180">
-          </el-table-column>
-          <el-table-column
-            prop="ad_type"
-            label="数据类型">
-          </el-table-column>
-          <el-table-column
-            prop="ad_status"
-            label="请求状态">
-          </el-table-column>
           <el-table-column
             prop="channel_id"
             label="渠道ID"
@@ -145,23 +90,37 @@
           <el-table-column
             prop="app_name"
             label="应用名称">
+            <template #default="scope">
+              <el-input
+                class="app-name-input"
+                size="mini"
+                maxlength="50"
+                v-if="scope.row.editing"
+                v-model="scope.row.app_name"
+                @blur="saveEdit(scope.row)"
+                placeholder="请输入应用名称"
+              ></el-input>
+              <span v-else>{{scope.row.app_name}}</span>
+            </template>
           </el-table-column>
           <el-table-column
-            prop="source_action_type"
-            label="原始类型">
-          </el-table-column>
-          <el-table-column
-            prop="action_type"
-            label="转化类型">
-          </el-table-column>
-          <el-table-column
-            prop="ad_num"
-            label="数量">
-          </el-table-column>
-          <el-table-column
-            v-if="!hideTableColum"
-            prop="conversion_rate"
-            label="回调有效率">
+            label="操作">
+            <template #default="scope">
+              <el-button
+                v-if="!scope.row.editing"
+                type="primary"
+                size="mini"
+                @click="startEdit(scope.row)"
+              >编辑
+              </el-button>
+              <el-button
+                v-else
+                type="success"
+                size="mini"
+                @click="saveEdit(scope.row)"
+              >保存
+              </el-button>
+            </template>
           </el-table-column>
         </el-table>
         <div class="page-wrapper">
@@ -183,7 +142,7 @@
 </template>
 
 <script>
-  import {pageListAdData, fetchAdDataPickInfo, exportAdData} from "@/api/ad-data";
+  import {pageListAdChannel, fetchAdChannelPickInfo, saveAdChannelInfo} from "@/api/ad-data";
 
   export default {
     name: "ad_data",
@@ -194,7 +153,6 @@
         total: 0,
         hasNext: false,
         briefIntroduction: '',
-        hideTableColum: true,
         // 日期选择信息
         pickerOptions: {
           shortcuts: [{
@@ -247,43 +205,9 @@
             }
           }]
         },
-        date_list: [new Date(), new Date()],
-        // 广告数据筛选信息列表
-        ad_data_pick_list: [],
-        // 广告数据类型选择信息
-        ad_type_options: [{
-          value: '0',
-          label: '点击'
-        }, {
-          value: '1',
-          label: '回调'
-        }],
-        // 广告数据类型
-        ad_type_value: '',
-        ad_status_options: [{
-          label: '点击',
-          options: [{
-            value: 1,
-            label: '失败'
-          }, {
-            value: 2,
-            label: '成功'
-          }]
-        }, {
-          label: '回调',
-          options: [{
-            value: 3,
-            label: '有效'
-          }, {
-            value: 4,
-            label: '类型未匹配'
-          }, {
-            value: 5,
-            label: '扣量'
-          }]
-        }],
-        // 广告状态值
-        ad_status_value: [],
+        date_list: [new Date().getTime() - 3600 * 1000 * 24 * 7, new Date()],
+        // 广告渠道信息筛选信息列表
+        ad_channel_pick_list: [],
         // 广告数据列表
         tableData: [],
         channel_id_options: [],
@@ -292,23 +216,43 @@
         customer_id_value: [],
         app_id_options: [],
         app_id_value: [],
+        // currentEditField: ''
       }
     },
     components: {
       // 'viewer': Viewer
     },
     methods: {
-      tableRowClassName({row}) {
-        // 给部分行添加颜色区别
-        let row_class_name = ''
-        if (row.data_new === true) {
-          return 'warning-row'
+      startEdit(row) {
+        // 重置所有行的编辑状态
+        this.tableData.forEach(item => {
+          item.editing = false
+        })
+        const index = this.tableData.findIndex(item => item.key_id === row.key_id)
+        if (index !== -1) {
+          const newRow = JSON.parse(JSON.stringify(this.tableData[index]))
+          newRow.editing = true
+          this.$set(this.tableData, index, newRow)
         }
-        return row_class_name;
+        // this.currentEditField = ''
+        console.log(this.tableData)
       },
-      handleTableColumnVisible() {
-        // 切换隐藏列
-        this.hideTableColum = !this.hideTableColum;
+      handleCellClick(row, column) {
+        if (row.editing) {
+          this.currentEditField = column.property
+        }
+      },
+      saveEdit(row) {
+        row.editing = false
+        // this.currentEditField = ''
+        // 这里可以添加数据保存逻辑
+        saveAdChannelInfo({
+            channel_id: row.channel_id, customer_id: row.customer_id, app_id: row.app_id, app_name: row.app_name
+          }
+        ).then(res => {
+            console.log('广告渠道信息更新完成:', res)
+          }
+        );
       },
       handlePageChange() {
         this.listAdData()
@@ -330,25 +274,25 @@
         let query_end_date = new Date(this.date_list[1])
         let start_date = this.shanghaiTime(query_start_date)
         let end_date = this.shanghaiTime(query_end_date)
-        fetchAdDataPickInfo({
+        fetchAdChannelPickInfo({
             start_date_time: start_date, end_date_time: end_date
           }
         ).then(res => {
             if (res.data.data != null) {
-              this.ad_data_pick_list = res.data.data.list;
-              this.initAdDataPickInfo();
+              this.ad_channel_pick_list = res.data.data.list;
+              this.initAdChannelPickInfo();
             }
           }
         );
       },
-      initAdDataPickInfo() {
-        // 初始处理广告数据筛选信息
+      initAdChannelPickInfo() {
+        // 初始处理广告渠道筛选信息
         // if (refresh_data)
         let channel_id_set = new Set();
         let customer_id_set = new Set();
         let app_id_set = new Set();
-        for (let ad_data_pick of this.ad_data_pick_list) {
-          const {channel_id, customer_id, app_id} = ad_data_pick;
+        for (let ad_channel_pick of this.ad_channel_pick_list) {
+          const {channel_id, customer_id, app_id} = ad_channel_pick;
           // if (this.ad_type_value !== '' && ad_type !== this.ad_type_value) {
           //   continue;
           // }
@@ -403,7 +347,7 @@
         if (this.ad_type_value !== '') {
           ad_data_query_param.ad_type = this.ad_type_value
         }
-        pageListAdData({
+        pageListAdChannel({
             page_num: this.pageNum,
             page_size: this.pageSize,
             query_param: ad_data_query_param
@@ -411,56 +355,16 @@
         ).then(res => {
             if (res.data.data != null) {
               this.tableData = res.data.data.list;
-              let is_new = true;
-              let row_key = "";
               for (let rowData of this.tableData) {
-                let current_row_key = rowData.ad_type + "_" + rowData.channel_id + "_" + rowData.customer_id + "_" + rowData.app_id + "_" + rowData.action_type;
-                if (row_key === current_row_key) {
-                  rowData.data_new = is_new;
-                } else {
-                  is_new = !is_new
-                  rowData.data_new = is_new;
-                }
-                rowData.key_id = rowData.ad_day + "_" + rowData.ad_type + "_" + rowData.ad_status + "_" + rowData.channel_id + "_" + rowData.customer_id + "_" + rowData.app_id + "_" + rowData.action_type;
-
-                row_key = current_row_key;
-                // console.log(rowData.data_new)
+                // 设置行初始编辑状态为false
+                rowData.editing = false;
+                rowData.key_id = rowData.channel_id + "_" + rowData.customer_id + "_" + rowData.app_id;
               }
               this.total = res.data.data.total;
               this.hasNext = res.data.data.hasNext;
-              // // 数据切换后立即刷新表格
-              // this.$nextTick(() => {
-              //   this.$refs.adDataTable.doLayout && this.$refs.adDataTable.doLayout()
-              // });
-              // this.$nextTick(() => {
-              //   this.$forceUpdate()
-              // })
             }
           }
         );
-      },
-      handleDataExport() {
-        // 处理数据导出
-        // this.$notify({
-        //   title: '提示',
-        //   message: '功能开发中',
-        //   duration: 4500
-        // });
-        let query_start_date = new Date(this.date_list[0])
-        let query_end_date = new Date(this.date_list[1])
-        let start_date = this.shanghaiTime(query_start_date)
-        let end_date = this.shanghaiTime(query_end_date)
-        let ad_data_query_param = {
-          start_date_time: start_date,
-          end_date_time: end_date,
-          channel_id_list: this.channel_id_value,
-          customer_id_list: this.customer_id_value,
-          app_id_list: this.app_id_value
-        }
-        if (this.ad_type_value !== '') {
-          ad_data_query_param.ad_type = this.ad_type_value
-        }
-        exportAdData(ad_data_query_param)
       },
       shanghaiTime(date) {
         // 上海时间 = UTC时间 + 8小时
@@ -540,15 +444,6 @@
     padding-right: 30px;
   }
 
-  //.ad-data-picker {
-  //  float: right;
-  //  //width: 200px; /* 建议指定宽度 */
-  //}
-  //
-  //.ad-data-pick {
-  //  margin-right: 30px;
-  //}
-
 
   .ad-data {
     height: 50px;
@@ -560,7 +455,7 @@
     cursor: pointer;
   }
 
-  ::v-deep .el-table .warning-row td {
-    background-color: oldlace !important;
+  .app-name-input {
+    max-width: 200px;
   }
 </style>
