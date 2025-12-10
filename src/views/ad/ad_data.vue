@@ -421,7 +421,7 @@
                   is_new = !is_new
                   rowData.data_new = is_new;
                 }
-                rowData.key_id = rowData.ad_day + "_" + rowData.ad_type + "_" + rowData.ad_status + "_" + rowData.channel_id + "_" + rowData.customer_id + "_" + rowData.app_id + "_" + rowData.action_type;
+                rowData.key_id = rowData.ad_day + "_" + rowData.ad_type + "_" + rowData.ad_status + "_" + rowData.channel_id + "_" + rowData.customer_id + "_" + rowData.app_id + "_" + rowData.source_action_type + "_" + rowData.action_type;
 
                 row_key = current_row_key;
                 // console.log(rowData.data_new)
