@@ -356,6 +356,10 @@
           customer_id_set.add(customer_id)
           app_id_set.add(app_id)
         }
+        // 排序
+        channel_id_set = new Set(Array.from(channel_id_set).sort());
+        customer_id_set = new Set(Array.from(customer_id_set).sort());
+        app_id_set = new Set(Array.from(app_id_set).sort());
         for (const channel_id of channel_id_set) {
           let label = channel_id;
           if (channel_id === '') {
