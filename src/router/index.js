@@ -60,6 +60,20 @@ const routes = [
       menuIndex: 'ad-channel'
     }
   },
+  {
+    path: '/ad_link',
+    component: Layout,
+    children: [
+      {
+        path: '',
+        name: 'AdLink',
+        component: () => import('@/views/ad/ad_link.vue')
+      }
+    ],
+    props: {
+      menuIndex: 'ad-link'
+    }
+  },
   // {
   //   path: '/',
   //   component: Layout,

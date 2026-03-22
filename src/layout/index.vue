@@ -41,9 +41,13 @@
               @click="handleMenuItemClick('ad-data')">
             <span class="menu-item-content">广告数据</span>
           </li>
+          <li :class="['menu-item',activeIndex === 'ad-link'? 'item-selected':'']"
+              @click="handleMenuItemClick('ad-link')">
+            <span class="menu-item-content">链接</span>
+          </li>
           <li :class="['menu-item',activeIndex === 'ad-channel'? 'item-selected':'']"
               @click="handleMenuItemClick('ad-channel')">
-            <span class="menu-item-content">渠道信息</span>
+            <span class="menu-item-content">应用名称</span>
           </li>
           <!--          <li class="menu-item">-->
           <!--            <router-link to="/home">主页</router-link>-->
@@ -135,6 +139,8 @@
         this.activeIndex = menuIndex;
         if (menuIndex === 'ad-data') {
           this.$router.push('/ad_data');
+        } else if (menuIndex === 'ad-link') {
+          this.$router.push('/ad_link');
         } else if (menuIndex === 'ad-channel') {
           this.$router.push('/ad_channel');
         }

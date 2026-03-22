@@ -63,14 +63,36 @@ export function exportAdData(data) {
 }
 
 /**
- * 获取待审核问题信息
- * @param id 待审核问题id
+ * 获取广告渠道标识筛选列表
  */
-export function fetchAuditIssue(id) {
+export function fetchAdChannelCodeList(data) {
   return request({
-    url: `/api/adm/audit/issue/${id}`,
-    method: 'get'
+    url: '/track/admin/ad-channel-code-list',
+    method: 'post',
+    data
   })
+}
+
+/**
+ * 查询广告链接列表
+ */
+export function pageListAdLink(data) {
+  return request({
+    url: '/track/admin/adv-link-list',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 添加广告主链接
+ */
+export function addAdvLink(data) {
+  return request({
+    url: '/track/admin/adv-link',
+    method: 'post',
+    data
+  });
 }
 
 /**
@@ -80,18 +102,6 @@ export function countAuditTool() {
   return request({
     url: '/api/adm/audit/tool/count',
     method: 'get'
-  })
-}
-
-/**
- * 审核问答信息
- * @param data 工具信息
- */
-export function auditIssue(data) {
-  return request({
-    url: `/api/adm/audit/issue`,
-    method: 'put',
-    data
   })
 }
 
