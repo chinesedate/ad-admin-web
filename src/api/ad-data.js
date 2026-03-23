@@ -96,13 +96,13 @@ export function addAdvLink(data) {
 }
 
 /**
- * 统计待审核工具数量
+ * 删除广告主链接
  */
-export function countAuditTool() {
+export function removeAdvLink(id) {
   return request({
-    url: '/api/adm/audit/tool/count',
-    method: 'get'
-  })
+    url: `/track/admin/adv-link//${id}`,
+    method: 'delete'
+  });
 }
 
 /**

@@ -1,8 +1,8 @@
 <template>
-  <div class="ad-data-wrapper">
+  <div class="ad-data-wrapper" ref="listWrapper">
     <div class="ad-data-list-content">
       <div class="ad-data-list">
-        <div class="ad-data-list-header">渠道信息列表</div>
+        <div class="ad-data-list-header">链接列表</div>
         <el-form :inline="true" class="pick-form-inline">
           <el-form-item class="pick-form-item" label="渠道名称">
             <el-select
@@ -36,7 +36,7 @@
         <el-table
           :data="tableData"
           ref="adDataTable"
-          row-key="key_id"
+          row-key="id"
           @cell-click="handleCellClick"
           stripe
           style="width: 100%">
@@ -60,20 +60,14 @@
           <el-table-column
             label="操作">
             <template #default="scope">
-              <el-button
-                v-if="!scope.row.editing"
-                type="primary"
-                size="mini"
-                @click="startEdit(scope.row)"
-              >编辑
+              <el-button class="adv-link-operate-button" type="primary" size="mini"
+                         @click="modifyLinkDetail(scope.row.id)">详情
               </el-button>
-              <el-button
-                v-else
-                type="success"
-                size="mini"
-                @click="saveEdit(scope.row)"
-              >保存
-              </el-button>
+              <el-popconfirm title="确定删除吗？" @confirm="handleAdvLinkRemove(scope.row)">
+                <template #reference>
+                  <el-button class="adv-link-operate-button" type="danger" size="mini">删除</el-button>
+                </template>
+              </el-popconfirm>
             </template>
           </el-table-column>
         </el-table>
@@ -163,12 +157,14 @@
 </template>
 
 <script>
-  import {saveAdChannelInfo, pageListAdLink, fetchAdChannelCodeList, addAdvLink} from "@/api/ad-data";
+  import {saveAdChannelInfo, pageListAdLink, fetchAdChannelCodeList, addAdvLink, removeAdvLink} from "@/api/ad-data";
 
   export default {
     name: "ad_data",
     data() {
       return {
+        // 保存滚动位置
+        savedScrollTop: 0,
         pageNum: 1,
         pageSize: 10,
         total: 0,
@@ -185,7 +181,7 @@
         channel_code_value: '',
         // 链接列表搜索关键词
         search_keyword: '',
-
+        searchForm: {},
         dialogVisible: false,
         submitLoading: false,
         link_form: {
@@ -305,6 +301,8 @@
               }
               this.total = res.data.data.total;
               this.hasNext = res.data.data.hasNext;
+              // 搜索后滚动位置重置为0
+              this.savedScrollTop = 0;
             }
           }
         );
@@ -335,9 +333,59 @@
         }
         addAdvLink(adv_link_info).then(res => {
             console.log('广告主链接添加完成:', res)
+            this.dialogVisible = true;
             this.closeAdLinkAdd();
           }
         );
+      },
+      /**
+       * 删除链接
+       */
+      handleAdvLinkRemove(item) {
+        const link_id = item.id;
+        // 删除广告主链接
+        removeAdvLink(link_id).then(() => {
+          this.pageNum = 1;
+          // 删除成功后，刷新数据列表
+          this.listAdLink();
+        })
+      },
+      // 保存筛选条件
+      saveState() {
+        // 保存滚动位置
+        if (this.$refs.listWrapper.value) {
+          this.savedScrollTop = this.$refs.listWrapper.value.scrollTop
+        }
+
+        // 保存筛选条件到 sessionStorage（可选）
+        sessionStorage.setItem('listSearchForm', JSON.stringify(this.listSearchForm))
+        sessionStorage.setItem('listScrollTop', this.savedScrollTop)
+      },
+
+      // 恢复状态
+      restoreState() {
+        // 恢复筛选条件
+        const savedForm = sessionStorage.getItem('listSearchForm')
+        if (savedForm) {
+          Object.assign(this.searchForm, JSON.parse(savedForm))
+          // 重新加载数据
+          this.listAdChannelCode();
+          this.listAdLink();
+        }
+
+        // 恢复滚动位置
+        const savedScroll = sessionStorage.getItem('listScrollTop')
+        if (savedScroll && this.$refs.listWrapper.value) {
+          this.$nextTick(() => {
+            this.$refs.listWrapper.value.scrollTop = Number(savedScroll)
+          })
+        }
+      },
+      // 跳转详情
+      modifyLinkDetail(id) {
+        // 跳转前保存当前状态
+        this.saveState();
+        this.$router.push({path: `/link_detail/${id}`});
       }
     },
     computed: {
@@ -348,6 +396,18 @@
     created() {
       this.listAdChannelCode();
       this.listAdLink();
+    },
+    activated() {
+      this.restoreState();
+    },
+    deactivated() {
+      // 当离开列表页时（不是跳转详情的情况），清除保存的状态
+      // 如果跳转到的是详情页，不清理（已在 goToDetail 中保存）
+      // 如果跳转到其他页面，需要清理
+      if (!this.$route.params.fromDetail) {
+        sessionStorage.removeItem('listSearchForm')
+        sessionStorage.removeItem('listScrollTop')
+      }
     }
   }
 </script>
@@ -431,5 +491,9 @@
 
   .adv-link-item {
     width: 300px;
+  }
+
+  .adv-link-operate-button {
+    margin-right: 10px;
   }
 </style>

@@ -67,11 +67,31 @@ const routes = [
       {
         path: '',
         name: 'AdLink',
-        component: () => import('@/views/ad/ad_link.vue')
+        component: () => import('@/views/ad/link/ad_link.vue')
       }
     ],
     props: {
       menuIndex: 'ad-link'
+    },
+    meta: {
+      keepAlive: true,  // 标记需要缓存
+    }
+  },
+  {
+    path: '/link_detail/:id',
+    component: Layout,
+    children: [
+      {
+        path: '',
+        name: 'LinkDetail',
+        component: () => import('@/views/ad/link/link_detail.vue')
+      }
+    ],
+    props: {
+      menuIndex: 'ad-link'
+    },
+    meta: {
+      keepAlive: false,  // 详情页不需要缓存
     }
   },
   // {
