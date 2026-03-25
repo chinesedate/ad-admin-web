@@ -100,7 +100,7 @@
         :rules="rules"
         label-width="100px"
       >
-        <el-form-item label="渠道" prop="channel_code">
+        <el-form-item label="渠道：" prop="channel_code">
           <el-select
             v-model="link_form.channel_code"
             filterable
@@ -113,28 +113,28 @@
             </el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="系统类型" prop="os_type">
+        <el-form-item label="系统类型：" prop="os_type">
           <el-radio-group v-model="link_form.os_type">
             <el-radio :label="1">安卓</el-radio>
             <el-radio :label="2">IOS</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="应用名称" prop="app_name">
+        <el-form-item label="应用名称：" prop="app_name">
           <el-input class="adv-link-item" v-model="link_form.app_name" placeholder="请输入应用名称"/>
         </el-form-item>
-        <el-form-item label="链接标识" prop="link_code">
+        <el-form-item label="链接标识：" prop="link_code">
           <el-input class="adv-link-item" v-model="link_form.link_code" placeholder="请输入链接标识"/>
         </el-form-item>
-        <el-form-item label="下载链接" prop="download_link">
+        <el-form-item label="下载链接：" prop="download_link">
           <el-input v-model="link_form.download_link" maxlength="2000" show-word-limit placeholder="请输入下载链接"/>
         </el-form-item>
-        <el-form-item label="点击链接" prop="click_link">
+        <el-form-item label="点击链接：" prop="click_link">
           <el-input v-model="link_form.click_link" maxlength="4000" show-word-limit placeholder="请输入点击监测链接"/>
         </el-form-item>
-        <el-form-item label="曝光链接" prop="show_link">
+        <el-form-item label="曝光链接：" prop="show_link">
           <el-input v-model="link_form.show_link" maxlength="4000" show-word-limit placeholder="请输入曝光监测链接"/>
         </el-form-item>
-        <el-form-item label="额外信息" prop="extra_info">
+        <el-form-item label="额外信息：" prop="extra_info">
           <el-input
             v-model="link_form.extra_info"
             type="textarea"

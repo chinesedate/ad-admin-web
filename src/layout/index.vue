@@ -47,7 +47,7 @@
           </li>
           <li :class="['menu-item',activeIndex === 'ad-channel'? 'item-selected':'']"
               @click="handleMenuItemClick('ad-channel')">
-            <span class="menu-item-content">应用名称</span>
+            <span class="menu-item-content">渠道信息</span>
           </li>
           <!--          <li class="menu-item">-->
           <!--            <router-link to="/home">主页</router-link>-->

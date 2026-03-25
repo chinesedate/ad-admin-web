@@ -100,8 +100,18 @@ export function addAdvLink(data) {
  */
 export function removeAdvLink(id) {
   return request({
-    url: `/track/admin/adv-link//${id}`,
+    url: `/track/admin/adv-link/${id}`,
     method: 'delete'
+  });
+}
+
+/**
+ * 查询广告主链接
+ */
+export function getAdvLink(id) {
+  return request({
+    url: `/track/admin/adv-link/${id}`,
+    method: 'get'
   });
 }
 

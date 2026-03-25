@@ -78,12 +78,13 @@ const routes = [
     }
   },
   {
-    path: '/link_detail/:id',
+    path: '/link_detail/:linkId',
     component: Layout,
     children: [
       {
         path: '',
         name: 'LinkDetail',
+        props: true,
         component: () => import('@/views/ad/link/link_detail.vue')
       }
     ],
