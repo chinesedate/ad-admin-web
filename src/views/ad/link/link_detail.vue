@@ -8,40 +8,69 @@
           <template #title>
             <div class="adv-link-info-header">广告主链接信息</div>
           </template>
-          <el-form ref="formRef" :model="link_form" :rules="rules" label-width="100px">
+          <!--显示模式-->
+          <el-form v-if="advLinkFormShow" ref="formRef" :model="advLinkInfo" label-width="100px">
             <!-- 一行显示4个表单项 -->
             <el-row :gutter="20">
               <el-col :span="4">
-                <el-form-item label="渠道：" prop="channel_code">
-                  <el-select
-                    v-model="advLinkInfo.channel_code"
-                    filterable
-                    placeholder="请选择">
-                    <el-option
-                      v-for="item in ad_channel_code_list"
-                      :key="item.value"
-                      :label="item.label"
-                      :value="item.value">
-                    </el-option>
-                  </el-select>
+                <el-form-item label="渠道：">
+                  <span>{{advLinkInfo.channel_name || '-'}}</span>
                 </el-form-item>
               </el-col>
               <el-col :span="4">
-                <el-form-item label="系统类型：" prop="os_type">
-                  <el-radio-group v-model="advLinkInfo.os_type">
-                    <el-radio :label="1">安卓</el-radio>
-                    <el-radio :label="2">IOS</el-radio>
-                  </el-radio-group>
+                <el-form-item label="系统类型：">
+                  <span>{{advLinkInfo.os_type_str || '-'}}</span>
                 </el-form-item>
               </el-col>
               <el-col :span="6">
-                <el-form-item label="应用名称：" prop="app_name">
-                  <el-input class="adv-link-item" v-model="advLinkInfo.app_name" placeholder="请输入应用名称"/>
+                <el-form-item label="应用名称：">
+                  <span>{{advLinkInfo.app_name || '-'}}</span>
                 </el-form-item>
               </el-col>
               <el-col :span="6">
-                <el-form-item label="链接标识：" prop="link_code">
-                  <el-input class="adv-link-item" v-model="advLinkInfo.link_code" placeholder="请输入链接标识"/>
+                <el-form-item label="链接标识：">
+                  <span>{{advLinkInfo.link_code || '-'}}</span>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-form-item class="adv-link-form-item" label="下载链接：">
+              <span class="ellipsis-link">{{longUrl || '-'}}</span>
+            </el-form-item>
+            <el-form-item class="adv-link-form-item" label="点击链接：">
+              <span>{{advLinkInfo.click_link || '-'}}</span>
+            </el-form-item>
+            <el-form-item class="adv-link-form-item" label="曝光链接：">
+              <span>{{advLinkInfo.show_link || '-'}}</span>
+            </el-form-item>
+            <el-form-item class="adv-link-form-item" label="额外信息：">
+              <span>{{advLinkInfo.extra_info || '-'}}</span>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="handleAdvLinkFormEditClick">编辑</el-button>
+            </el-form-item>
+          </el-form>
+          <!--编辑模式-->
+          <el-form v-else ref="formRef" :model="link_form" :rules="rules" label-width="100px">
+            <!-- 一行显示4个表单项 -->
+            <el-row :gutter="20">
+              <el-col :span="4">
+                <el-form-item label="渠道：">
+                  <span>{{advLinkInfo.channel_name || '-'}}</span>
+                </el-form-item>
+              </el-col>
+              <el-col :span="4">
+                <el-form-item label="系统类型：">
+                  <span>{{advLinkInfo.os_type_str || '-'}}</span>
+                </el-form-item>
+              </el-col>
+              <el-col :span="6">
+                <el-form-item label="应用名称：">
+                  <span>{{advLinkInfo.app_name || '-'}}</span>
+                </el-form-item>
+              </el-col>
+              <el-col :span="6">
+                <el-form-item label="链接标识：">
+                  <span>{{advLinkInfo.link_code || '-'}}</span>
                 </el-form-item>
               </el-col>
             </el-row>
@@ -68,8 +97,7 @@
               />
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" @click="onSubmit">编辑</el-button>
-              <el-button>取消</el-button>
+              <el-button @click="handleAdvLinkFormEditCancel" plain>取消</el-button>
               <el-button type="primary" @click="onSubmit">保存</el-button>
             </el-form-item>
           </el-form>
@@ -115,8 +143,10 @@
     },
     data() {
       return {
+        longUrl: 'https://www.example.com/very/long/url/that/will/definitely/dd',
+        advLinkFormShow: true,
         // 折叠面板默认展开item
-        collapseName:'first',
+        collapseName: 'first',
         pageNum: 0,
         pageSize: 10,
         total: 0,
@@ -164,56 +194,18 @@
         // 回到数据列表页
         this.$router.push({path: '/ad_link'});
       },
-      // handlePageChange() {
-      //
-      // },
-      // handleAdopt() {
-      //   auditTool({id: this.auditToolInfo.id, status: 1}).then(res => {
-      //       if (res != null) {
-      //         console.log(res);
-      //         this.listAuditTool();
-      //       }
-      //     }
-      //   );
-      // },
-      // handleReject() {
-      //   auditTool({id: this.auditToolInfo.id, status: 2}).then(
-      //     res => {
-      //       if (res != null) {
-      //         console.log(res);
-      //         this.listAuditTool();
-      //       }
-      //     }
-      //   );
-      // },
-      // fetchAuditTool(auditToolId) {
-      //   fetchAuditTool(auditToolId).then(res => {
-      //     this.auditToolInfo = res.data.data;
-      //   });
-      // },
-      // handleAuditToolClick(auditTool) {
-      //   // 首先将列表中的简短信息赋值给待审核对象，然后通过接口查询详细信息后再更新
-      //   this.auditToolInfo = auditTool;
-      //   this.fetchAuditTool(auditTool.id);
-      // },
-      // listAuditTool() {
-      //   listAuditTool({
-      //       pageNum: this.pageNum,
-      //       pageSize: this.pageSize,
-      //       data: {questionId: 1111}
-      //     }
-      //   ).then(res => {
-      //       if (res.data.data != null) {
-      //         this.auditToolList = res.data.data.list;
-      //         this.total = res.data.data.total;
-      //         this.hasNext = res.data.data.hasNext;
-      //         if (this.auditToolList.length > 0) {
-      //           this.fetchAuditTool(this.auditToolList[0].id);
-      //         }
-      //       }
-      //     }
-      //   );
-      // },
+      /**
+       * 触发广告主链接进入编辑状态
+       */
+      handleAdvLinkFormEditClick() {
+        this.advLinkFormShow = false;
+      },
+      /**
+       * 广告主链接取消编辑状态
+       */
+      handleAdvLinkFormEditCancel() {
+        this.advLinkFormShow = true;
+      },
       /**
        * 查询广告主链接信息
        */
@@ -223,9 +215,9 @@
             this.advLinkInfo = res.data.data;
             const os_type = this.advLinkInfo.os_type;
             if (os_type === 1) {
-              this.advLinkInfo.os_type = "安卓"
+              this.advLinkInfo.os_type_str = "安卓"
             } else if (os_type === 2) {
-              this.advLinkInfo.os_type = "IOS"
+              this.advLinkInfo.os_type_str = "IOS"
             }
           }
         });
@@ -244,6 +236,15 @@
 
   .adv-link-wrapper {
     padding-top: 40px;
+  }
+
+  .ellipsis-link {
+    display: inline-block;
+    width: 90%;
+    word-wrap: break-word; /* 允许长单词换行 */
+    word-break: break-all; /* 允许在任意字符间换行 */
+    white-space: normal; /* 允许换行（关键：不是 nowrap） */
+    line-height: 1.5; /* 行高 */
   }
 
   .audit-tool-list-content {
