@@ -66,37 +66,54 @@ const routes = [
     children: [
       {
         path: '',
-        name: 'AdLink',
-        component: () => import('@/views/ad/link/ad_link.vue')
+        name: 'LinkWrapper',
+        component: () => import('@/views/ad/link_wrapper.vue'),
+        children: [
+          {
+            path: 'list',
+            name: 'AdLink',
+            component: () => import('@/views/ad/link/ad_link.vue')
+          },
+          {
+            path: ':linkId',
+            name: 'LinkDetail',
+            component: () => import('@/views/ad/link/link_detail.vue'),
+            props: (route) => ({
+              linkId: Number(route.params.linkId)  // 在这里转换类型
+            })
+          }
+        ],
       }
     ],
     props: {
       menuIndex: 'ad-link'
-    },
-    meta: {
-      keepAlive: true,  // 标记需要缓存
     }
   },
-  {
-    path: '/link_detail/:linkId',
-    component: Layout,
-    children: [
-      {
-        path: '',
-        name: 'LinkDetail',
-        props: (route) => ({
-          linkId: Number(route.params.linkId)  // 在这里转换类型
-        }),
-        component: () => import('@/views/ad/link/link_detail.vue')
-      }
-    ],
-    props: {
-      menuIndex: 'ad-link'
-    },
-    meta: {
-      keepAlive: false,  // 详情页不需要缓存
-    }
-  },
+  // {
+  //   path: '/link_detail/:linkId',
+  //   component: Layout,
+  //   children: [
+  //     {
+  //       path: '',
+  //       name: 'LinkDetailWrapper',
+  //       component: () => import('@/views/ad/link_wrapper.vue'),
+  //       children: [{
+  //         path: '',
+  //         name: 'LinkDetail',
+  //         component: () => import('@/views/ad/link/ad_link.vue'),
+  //         props: (route) => ({
+  //           linkId: Number(route.params.linkId)  // 在这里转换类型
+  //         }),
+  //       }],
+  //       meta: {
+  //         keepAlive: false,  // 详情页不需要缓存
+  //       }
+  //     }
+  //   ],
+  //   props: {
+  //     menuIndex: 'ad-link'
+  //   }
+  // },
   // {
   //   path: '/',
   //   component: Layout,

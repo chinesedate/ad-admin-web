@@ -3,10 +3,14 @@
     <el-page-header @back="goBackAdvList" content="链接详情">
     </el-page-header>
     <div class="adv-link-wrapper">
-      <el-collapse v-model="collapseName">
-        <el-collapse-item name="first">
+      <el-collapse @change="handleCollapseChange">
+        <el-collapse-item>
           <template #title>
             <div class="adv-link-info-header">广告主链接信息</div>
+            <div class="adv-link-info-header-tip">
+              <span v-if="collapseClose">（点击展开完整信息）</span>
+              <span v-else>（点击收起完整信息）</span>
+            </div>
           </template>
           <!--显示模式-->
           <el-form v-show="advLinkFormShow" :model="advLinkInfo" label-width="100px">
@@ -107,13 +111,74 @@
     <div class="audit-tool-list-content">
       <div class="audit-tool-list">
         <div class="audit-tool-list-header">媒体链接列表</div>
-        <ul>
-          <li class="audit-tool" v-for="auditTool in auditToolList" :key="auditTool.id"
-              @click="handleAuditToolClick(auditTool)">
-            <div class="tool-content">{{auditTool.name}}</div>
-            <div class="tool-content"><p>{{auditTool.description}}</p></div>
-          </li>
-        </ul>
+        <el-form :inline="true" class="pick-form-inline">
+          <el-form-item class="pick-form-item" label="渠道名称">
+            <el-select
+              v-model="channel_code_value"
+              filterable
+              clearable
+              @change="handleAdvLinkQuery"
+              placeholder="请选择">
+              <el-option
+                v-for="item in ad_channel_code_list"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value">
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item class="pick-form-item" label="搜索">
+            <el-input
+              class="adv-link-search"
+              clearable
+              placeholder="请输入内容"
+              @change="handleAdvLinkQuery"
+              prefix-icon="el-icon-search"
+              v-model="search_keyword">
+            </el-input>
+          </el-form-item>
+          <el-form-item class="pick-form-item">
+            <el-button type="primary" @click="activeMediaLinkAdd">添加链接</el-button>
+          </el-form-item>
+        </el-form>
+        <el-table
+          :data="tableData"
+          ref="adDataTable"
+          row-key="id"
+          @cell-click="handleCellClick"
+          stripe
+          style="width: 100%">
+          <el-table-column
+            prop="channel_name"
+            label="渠道名称"
+            width="180">
+          </el-table-column>
+          <el-table-column
+            prop="os_type"
+            label="系统类型">
+          </el-table-column>
+          <el-table-column
+            prop="app_name"
+            label="应用名称">
+          </el-table-column>
+          <el-table-column
+            prop="link_code"
+            label="链接标识">
+          </el-table-column>
+          <el-table-column
+            label="操作">
+            <template #default="scope">
+              <el-button class="adv-link-operate-button" type="primary" size="mini"
+                         @click="modifyLinkDetail(scope.row.id)">详情
+              </el-button>
+              <el-popconfirm title="确定删除吗？" @confirm="handleAdvLinkRemove(scope.row)">
+                <template #reference>
+                  <el-button class="adv-link-operate-button" type="danger" size="mini">删除</el-button>
+                </template>
+              </el-popconfirm>
+            </template>
+          </el-table-column>
+        </el-table>
         <div class="page-wrapper">
           <el-pagination class="page-pagination"
                          background
@@ -129,29 +194,101 @@
         </div>
       </div>
     </div>
+    <!-- 添加链接弹框 -->
+    <el-dialog
+      title="媒体链接"
+      :visible.sync="dialogVisible"
+      width="800px"
+      :close-on-click-modal="false"
+      @close="closeAdLinkAdd"
+    >
+      <el-form
+        ref="formRef"
+        :model="link_form"
+        :rules="rules"
+        label-width="100px"
+      >
+        <el-form-item label="渠道：" prop="channel_code">
+          <el-select
+            v-model="link_form.channel_code"
+            filterable
+            clearable
+            placeholder="请选择">
+            <el-option
+              v-for="item in channel_media_code_list"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value">
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="系统类型：" prop="os_type">
+          <el-radio-group v-model="link_form.os_type">
+            <el-radio :label="1">安卓</el-radio>
+            <el-radio :label="2">IOS</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="应用名称：" prop="app_name">
+          <el-input class="adv-link-item" v-model="link_form.app_name" placeholder="请输入应用名称"/>
+        </el-form-item>
+        <el-form-item label="链接标识：" prop="link_code">
+          <el-input class="adv-link-item" v-model="link_form.link_code" placeholder="请输入链接标识"/>
+        </el-form-item>
+        <el-form-item label="下载链接：" prop="download_link">
+          <el-input v-model="link_form.download_link" maxlength="2000" show-word-limit placeholder="请输入下载链接"/>
+        </el-form-item>
+        <el-form-item label="点击链接：" prop="click_link">
+          <el-input v-model="link_form.click_link" maxlength="4000" show-word-limit placeholder="请输入点击监测链接"/>
+        </el-form-item>
+        <el-form-item label="曝光链接：" prop="show_link">
+          <el-input v-model="link_form.show_link" maxlength="4000" show-word-limit placeholder="请输入曝光监测链接"/>
+        </el-form-item>
+        <el-form-item label="额外信息：" prop="extra_info">
+          <el-input
+            v-model="link_form.extra_info"
+            type="textarea"
+            :rows="3"
+            maxlength="2000"
+            show-word-limit
+            placeholder="请输入应用描述"
+          />
+        </el-form-item>
+      </el-form>
 
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="submitLoading" @click="handleMediaLinkAdd">
+          确定
+        </el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-  import {getAdvLink, updateAdvLink} from "@/api/ad-data";
+  import {addAdvLink, fetchAdChannelCodeList, getAdvLink, updateAdvLink} from "@/api/ad-data";
 
   export default {
-    name: "link-detail",
+    name: "LinkDetail",
     props: {
       linkId: Number
     },
     data() {
       return {
+        // 折叠面板展开收起状态
+        collapseClose: true,
         advLinkFormShow: true,
-        // 折叠面板默认展开item
-        collapseName: 'first',
         pageNum: 0,
         pageSize: 10,
         total: 0,
         hasNext: false,
         currentPage: 1,
-        auditToolList: [],
+        // 媒体链接数据列表
+        tableData: [],
+        dialogVisible: false,
+        submitLoading: false,
+        // 媒体渠道标识列表
+        channel_media_code_list: [],
         /**
          * 广告主链接信息
          */
@@ -193,8 +330,23 @@
     },
     methods: {
       goBackAdvList() {
-        // 回到数据列表页
-        this.$router.push({path: '/ad_link'});
+        // 回到列表页，通过路由参数标记
+        this.$router.push({
+          path: '/ad_link/list',
+          query: {fromDetail: 'true'}
+        })
+      },
+      /**
+       * 触发添加媒体链接
+       */
+      activeMediaLinkAdd() {
+        this.dialogVisible = true
+      },
+      /**
+       * 折叠面板展开或收起触发
+       */
+      handleCollapseChange() {
+        this.collapseClose = !this.collapseClose;
       },
       /**
        * 触发广告主链接进入编辑状态
@@ -230,6 +382,8 @@
             } else if (os_type === 2) {
               this.advLinkInfo.os_type_str = "IOS"
             }
+            // 查询当前广告主关联的媒体
+            this.listAdChannelCode();
           }
         });
       },
@@ -270,8 +424,46 @@
           }
         });
       },
+      /**
+       * 添加媒体链接
+       */
+      handleMediaLinkAdd() {
+        const adv_link_info = {
+          channel_code: this.link_form.channel_code,
+          os_type: this.link_form.os_type,
+          app_name: this.link_form.app_name,
+          link_code: this.link_form.link_code,
+          download_link: this.link_form.download_link,
+          click_link: this.link_form.click_link,
+          show_link: this.link_form.show_link,
+          extra_info: this.link_form.extra_info
+        }
+        addAdvLink(adv_link_info).then(res => {
+            console.log('广告主链接添加完成:', res)
+            this.dialogVisible = true;
+            this.closeAdLinkAdd();
+          }
+        );
+      },
       handlePageChange() {
         this.listAdData()
+      },
+      listAdChannelCode() {
+        // 查询广告渠道标识筛选信息
+        fetchAdChannelCodeList({
+          up_down_type: 0, //  渠道上下游类型 0 （媒体）  1 （广告主）
+          channel_adv_code: this.advLinkInfo.channel_code
+        }).then(res => {
+            if (res.data.data != null) {
+              let channel_code_list = res.data.data;
+              for (const channel_code_info of channel_code_list) {
+                const channel_name = channel_code_info.channel_name;
+                const channel_code = channel_code_info.channel_code;
+                this.channel_media_code_list.push({value: channel_code, label: channel_name});
+              }
+            }
+          }
+        );
       },
     },
     created() {
@@ -300,13 +492,12 @@
 
   .audit-tool-list-content {
     padding-top: 20px;
-    display: flex;
   }
 
-  .audit-tool-list {
-    min-width: 584px;
-    max-width: 1300px;
-  }
+  //.audit-tool-list {
+  //  min-width: 584px;
+  //  max-width: 1300px;
+  //}
 
   .adv-link-info-header {
     font-weight: 600;
@@ -315,6 +506,10 @@
     color: #212121;
     word-break: break-word;
     padding: 20px 0;
+  }
+
+  .adv-link-info-header-tip {
+    margin-left: 10px;
   }
 
   .audit-tool-list-header {
@@ -326,17 +521,13 @@
     padding-bottom: 20px;
   }
 
-  .audit-tool-info {
 
+  .pick-form-inline {
+    padding: 0 10px;
   }
 
-  .audit-tool-info-header {
-    font-weight: 600;
-    font-size: 24px;
-    line-height: 40px;
-    color: #212121;
-    word-break: break-word;
-    padding-bottom: 20px;
+  .pick-form-item {
+    padding-right: 30px;
   }
 
   .audit-tool-info-button {

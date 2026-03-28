@@ -1,22 +1,13 @@
 <template>
   <router-view v-slot="{ Component }">
-    <keep-alive>
-      <component
-        :is="Component"
-        v-if="$route.meta.keepAlive"
-        :key="$route.fullPath"
-      />
-    </keep-alive>
-    <component
-      :is="Component"
-      v-if="!$route.meta.keepAlive"
-      :key="$route.fullPath"
-    />
+    <!-- 移除 keep-alive，让子组件自然切换 -->
+    <component :is="Component" :key="$route.path" />
   </router-view>
 </template>
-<script setup>
 
+<script>
+  export default {
+    name: 'LinkWrapper',
+    // 不再使用 keep-alive
+  }
 </script>
-<style scoped>
-
-</style>

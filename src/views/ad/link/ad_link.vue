@@ -12,7 +12,7 @@
               @change="handleAdvLinkQuery"
               placeholder="请选择">
               <el-option
-                v-for="item in ad_channel_code_list"
+                v-for="item in channel_adv_code_list"
                 :key="item.value"
                 :label="item.label"
                 :value="item.value">
@@ -107,7 +107,7 @@
             clearable
             placeholder="请选择">
             <el-option
-              v-for="item in ad_channel_code_list"
+              v-for="item in channel_adv_code_list"
               :key="item.value"
               :label="item.label"
               :value="item.value">
@@ -161,7 +161,7 @@
   import {saveAdChannelInfo, pageListAdLink, fetchAdChannelCodeList, addAdvLink, removeAdvLink} from "@/api/ad-data";
 
   export default {
-    name: "ad_data",
+    name: "AdLink",
     data() {
       return {
         // 保存滚动位置
@@ -172,11 +172,9 @@
         hasNext: false,
         briefIntroduction: '',
         // 广告渠道标识筛选信息列表
-        ad_channel_code_list: [],
+        channel_adv_code_list: [],
         // 广告数据列表
         tableData: [],
-        channel_id_options: [],
-        customer_id_options: [],
         app_id_options: [],
         // 选中渠道标识值
         channel_code_value: '',
@@ -273,13 +271,13 @@
               for (const channel_code_info of channel_code_list) {
                 const channel_name = channel_code_info.channel_name;
                 const channel_code = channel_code_info.channel_code;
-                this.ad_channel_code_list.push({value: channel_code, label: channel_name});
+                this.channel_adv_code_list.push({value: channel_code, label: channel_name});
               }
             }
           }
         );
       },
-      listAdLink() {
+      listAdLink(state = undefined) {
         let ad_link_query_param = {
           channel_code: this.channel_code_value,
           keyword: this.search_keyword
@@ -302,8 +300,14 @@
               }
               this.total = res.data.data.total;
               this.hasNext = res.data.data.hasNext;
-              // 搜索后滚动位置重置为0
-              this.savedScrollTop = 0;
+              if (state) {
+                // 恢复滚动位置
+                if (state.scrollTop && this.$refs.listWrapper) {
+                  setTimeout(() => {
+                    this.$refs.listWrapper.scrollTop = state.scrollTop
+                  }, 100)
+                }
+              }
             }
           }
         );
@@ -319,7 +323,7 @@
         this.$refs.formRef.resetFields()
       },
       /**
-       * 添加链接
+       * 添加广告主链接
        */
       handleAdvLinkAdd() {
         const adv_link_info = {
@@ -334,8 +338,10 @@
         }
         addAdvLink(adv_link_info).then(res => {
             console.log('广告主链接添加完成:', res)
-            this.dialogVisible = true;
+            this.dialogVisible = false;
             this.closeAdLinkAdd();
+            // 刷新广告主链接列表
+            this.listAdLink()
           }
         );
       },
@@ -351,42 +357,49 @@
           this.listAdLink();
         })
       },
-      // 保存筛选条件
-      saveState() {
-        // 保存滚动位置
-        if (this.$refs.listWrapper.value) {
-          this.savedScrollTop = this.$refs.listWrapper.value.scrollTop
+      // 保存当前状态
+      saveCurrentState() {
+        this.savedState = {
+          channel_code_value: this.channel_code_value,
+          search_keyword: this.search_keyword,
+          pageNum: this.pageNum,
+          scrollTop: this.$refs.listWrapper?.scrollTop || 0,
+          timestamp: Date.now()
         }
-
-        // 保存筛选条件到 sessionStorage（可选）
-        sessionStorage.setItem('listSearchForm', JSON.stringify(this.listSearchForm))
-        sessionStorage.setItem('listScrollTop', this.savedScrollTop)
+        // 保存到 sessionStorage
+        sessionStorage.setItem('adLinkState', JSON.stringify(this.savedState))
       },
 
       // 恢复状态
       restoreState() {
-        // 恢复筛选条件
-        const savedForm = sessionStorage.getItem('listSearchForm')
-        if (savedForm) {
-          Object.assign(this.searchForm, JSON.parse(savedForm))
-          // 重新加载数据
-          this.listAdChannelCode();
-          this.listAdLink();
-        }
+        const savedState = sessionStorage.getItem('adLinkState')
+        if (savedState) {
+          const state = JSON.parse(savedState)
+          this.channel_code_value = state.channel_code_value || ''
+          this.search_keyword = state.search_keyword || ''
+          this.pageNum = state.pageNum || 1
 
-        // 恢复滚动位置
-        const savedScroll = sessionStorage.getItem('listScrollTop')
-        if (savedScroll && this.$refs.listWrapper.value) {
-          this.$nextTick(() => {
-            this.$refs.listWrapper.value.scrollTop = Number(savedScroll)
-          })
+          // 重新加载数据
+          this.listAdLink(state)
+        } else {
+          this.listAdLink()
         }
+      },
+
+      // 清理状态
+      clearState() {
+        sessionStorage.removeItem('adLinkState')
+        this.savedState = null
       },
       // 跳转详情
       modifyLinkDetail(id) {
-        // 跳转前保存当前状态
-        this.saveState();
-        this.$router.push({path: `/link_detail/${id}`});
+        // 保存当前状态
+        this.saveCurrentState()
+        // 跳转到详情页
+        this.$router.push({
+          path: `/ad_link/${id}`,
+          query: {fromList: 'true'}
+        })
       }
     },
     computed: {
@@ -396,18 +409,57 @@
     },
     created() {
       this.listAdChannelCode();
-      this.listAdLink();
+      // 注意：不在 created 中调用 listAdLink，让 restoreState 决定是否加载
+      // 如果没有保存的状态，才加载初始数据
+      const savedForm = sessionStorage.getItem('adLinkState');
+      if (!savedForm) {
+        this.listAdLink();
+      } else {
+        console.log('AdLink 22222')
+        this.restoreState();
+      }
+      console.log('AdLink created')
     },
-    activated() {
-      this.restoreState();
+    // 使用 beforeRouteEnter 和 beforeRouteLeave
+    beforeRouteEnter(to, from, next) {
+      next(vm => {
+        // 检查是否从详情页返回
+        const fromDetail = from.path.match(/\/ad_link\/\d+$/)
+        if (fromDetail) {
+          vm.restoreState()
+        } else {
+          // 检查是否有保存的状态（浏览器刷新）
+          const savedState = sessionStorage.getItem('adLinkState')
+          if (savedState) {
+            vm.restoreState()
+          } else {
+            vm.listAdLink()
+          }
+        }
+      })
     },
-    deactivated() {
-      // 当离开列表页时（不是跳转详情的情况），清除保存的状态
-      // 如果跳转到的是详情页，不清理（已在 goToDetail 中保存）
-      // 如果跳转到其他页面，需要清理
-      if (!this.$route.params.fromDetail) {
-        sessionStorage.removeItem('listSearchForm')
-        sessionStorage.removeItem('listScrollTop')
+
+    beforeRouteLeave(to, from, next) {
+      // 判断是否跳转到详情页
+      const isGoingToDetail = to.path.match(/\/ad_link\/\d+$/)
+
+      if (isGoingToDetail) {
+        // 跳转到详情页，保存状态
+        this.saveCurrentState()
+      } else {
+        // 不是跳转到详情页，清理状态
+        this.clearState()
+      }
+
+      next()
+    },
+
+    // 组件销毁前清理
+    beforeDestroy() {
+      // 如果不是跳转到详情页，清理状态
+      const isGoingToDetail = this.$router.currentRoute?.path?.match(/\/ad_link\/\d+$/)
+      if (!isGoingToDetail) {
+        this.clearState()
       }
     }
   }

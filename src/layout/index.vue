@@ -140,7 +140,7 @@
         if (menuIndex === 'ad-data') {
           this.$router.push('/ad_data');
         } else if (menuIndex === 'ad-link') {
-          this.$router.push('/ad_link');
+          this.$router.push('/ad_link/list');
         } else if (menuIndex === 'ad-channel') {
           this.$router.push('/ad_channel');
         }
