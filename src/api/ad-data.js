@@ -116,13 +116,12 @@ export function getAdvLink(id) {
 }
 
 /**
- * 获取待审核工具分类信息列表
- * @param data 查询条件
+ * 更新广告主链接信息
  */
-export function listAuditToolCategory(data) {
+export function updateAdvLink(data) {
   return request({
-    url: '/api/adm/audit/tool/list',
-    method: 'post',
+    url: '/track/admin/adv-link',
+    method: 'put',
     data
   })
 }

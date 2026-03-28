@@ -104,6 +104,7 @@
           <el-select
             v-model="link_form.channel_code"
             filterable
+            clearable
             placeholder="请选择">
             <el-option
               v-for="item in ad_channel_code_list"

@@ -9,7 +9,7 @@
             <div class="adv-link-info-header">广告主链接信息</div>
           </template>
           <!--显示模式-->
-          <el-form v-if="advLinkFormShow" ref="formRef" :model="advLinkInfo" label-width="100px">
+          <el-form v-show="advLinkFormShow" :model="advLinkInfo" label-width="100px">
             <!-- 一行显示4个表单项 -->
             <el-row :gutter="20">
               <el-col :span="4">
@@ -34,7 +34,7 @@
               </el-col>
             </el-row>
             <el-form-item class="adv-link-form-item" label="下载链接：">
-              <span class="ellipsis-link">{{longUrl || '-'}}</span>
+              <span class="ellipsis-link">{{advLinkInfo.download_link || '-'}}</span>
             </el-form-item>
             <el-form-item class="adv-link-form-item" label="点击链接：">
               <span>{{advLinkInfo.click_link || '-'}}</span>
@@ -50,7 +50,7 @@
             </el-form-item>
           </el-form>
           <!--编辑模式-->
-          <el-form v-else ref="formRef" :model="link_form" :rules="rules" label-width="100px">
+          <el-form v-show="!advLinkFormShow" ref="formRef" :model="link_form" :rules="rules" label-width="100px">
             <!-- 一行显示4个表单项 -->
             <el-row :gutter="20">
               <el-col :span="4">
@@ -64,31 +64,31 @@
                 </el-form-item>
               </el-col>
               <el-col :span="6">
-                <el-form-item label="应用名称：">
-                  <span>{{advLinkInfo.app_name || '-'}}</span>
+                <el-form-item label="应用名称：" prop="app_name">
+                  <el-input class="adv-link-item" v-model="link_form.app_name" placeholder="请输入应用名称"/>
                 </el-form-item>
               </el-col>
               <el-col :span="6">
-                <el-form-item label="链接标识：">
-                  <span>{{advLinkInfo.link_code || '-'}}</span>
+                <el-form-item label="链接标识：" prop="link_code">
+                  <el-input class="adv-link-item" v-model="link_form.link_code" placeholder="请输入链接标识"/>
                 </el-form-item>
               </el-col>
             </el-row>
             <el-form-item label="下载链接：" prop="download_link">
-              <el-input v-model="advLinkInfo.download_link" maxlength="2000" show-word-limit
+              <el-input v-model="link_form.download_link" maxlength="2000" show-word-limit
                         placeholder="请输入下载链接"/>
             </el-form-item>
             <el-form-item label="点击链接：" prop="click_link">
-              <el-input v-model="advLinkInfo.click_link" maxlength="4000" show-word-limit
+              <el-input v-model="link_form.click_link" maxlength="4000" show-word-limit
                         placeholder="请输入点击监测链接"/>
             </el-form-item>
             <el-form-item label="曝光链接：" prop="show_link">
-              <el-input v-model="advLinkInfo.show_link" maxlength="4000" show-word-limit
+              <el-input v-model="link_form.show_link" maxlength="4000" show-word-limit
                         placeholder="请输入曝光监测链接"/>
             </el-form-item>
             <el-form-item label="额外信息：" prop="extra_info">
               <el-input
-                v-model="advLinkInfo.extra_info"
+                v-model="link_form.extra_info"
                 type="textarea"
                 :rows="3"
                 maxlength="2000"
@@ -98,7 +98,7 @@
             </el-form-item>
             <el-form-item>
               <el-button @click="handleAdvLinkFormEditCancel" plain>取消</el-button>
-              <el-button type="primary" @click="onSubmit">保存</el-button>
+              <el-button type="primary" @click="handleModifyAdvLink">保存</el-button>
             </el-form-item>
           </el-form>
         </el-collapse-item>
@@ -134,7 +134,7 @@
 </template>
 
 <script>
-  import {getAdvLink} from "@/api/ad-data";
+  import {getAdvLink, updateAdvLink} from "@/api/ad-data";
 
   export default {
     name: "link-detail",
@@ -143,7 +143,6 @@
     },
     data() {
       return {
-        longUrl: 'https://www.example.com/very/long/url/that/will/definitely/dd',
         advLinkFormShow: true,
         // 折叠面板默认展开item
         collapseName: 'first',
@@ -156,10 +155,19 @@
         /**
          * 广告主链接信息
          */
-        advLinkInfo: {},
-        link_form: {
+        advLinkInfo: {
+          channel_name: '',
           channel_code: '',
           os_type: 1,
+          os_type_str: '',
+          app_name: '',
+          link_code: '',
+          download_link: '',
+          click_link: '',
+          show_link: '',
+          extra_info: ''
+        },
+        link_form: {
           app_name: '',
           link_code: '',
           download_link: '',
@@ -168,17 +176,11 @@
           extra_info: ''
         },
         rules: {
-          channel_code: [
-            {required: true, message: '请输入渠道编码', trigger: 'blur'}
-          ],
-          os_type: [
-            {required: true}
-          ],
           app_name: [
             {required: true, message: '请输入应用名称', trigger: 'blur'}
           ],
           download_link: [
-            {type: 'url', message: '请输入正确的URL地址', trigger: 'blur'}
+            {type: 'url', message: '请输入正确的URL地址', trigger: 'blur'},
           ],
           click_link: [
             {type: 'url', message: '请输入正确的URL地址', trigger: 'blur'}
@@ -198,12 +200,21 @@
        * 触发广告主链接进入编辑状态
        */
       handleAdvLinkFormEditClick() {
+        // 将展示对象中的数据复制都form表单中
+        this.link_form.app_name = this.advLinkInfo.app_name;
+        this.link_form.link_code = this.advLinkInfo.link_code;
+        this.link_form.download_link = this.advLinkInfo.download_link;
+        this.link_form.click_link = this.advLinkInfo.click_link;
+        this.link_form.show_link = this.advLinkInfo.show_link;
+        this.link_form.extra_info = this.advLinkInfo.extra_info;
         this.advLinkFormShow = false;
       },
       /**
        * 广告主链接取消编辑状态
        */
       handleAdvLinkFormEditCancel() {
+        // 关闭时重置表单
+        this.$refs.formRef.resetFields();
         this.advLinkFormShow = true;
       },
       /**
@@ -221,7 +232,47 @@
             }
           }
         });
-      }
+      },
+      /**
+       * 编辑广告主链接信息
+       */
+      handleModifyAdvLink() {
+        // 先触发表单校验
+        this.$refs.formRef.validate((valid) => {
+          if (valid) {
+            // 使用 link_form 中的数据更新
+            updateAdvLink({
+              id: this.linkId,
+              channel_code: this.advLinkInfo.channel_code,
+              os_type: this.advLinkInfo.os_type,
+              app_name: this.link_form.app_name,
+              link_code: this.link_form.link_code,
+              download_link: this.link_form.download_link,
+              click_link: this.link_form.click_link,
+              show_link: this.link_form.show_link,
+              extra_info: this.link_form.extra_info
+            }).then(() => {
+              // 可选：显示成功提示
+              this.$message.success('更新成功');
+              // 将form表单中的数据回写到展示对象中
+              this.advLinkInfo.app_name = this.link_form.app_name;
+              this.advLinkInfo.link_code = this.link_form.link_code;
+              this.advLinkInfo.download_link = this.link_form.download_link;
+              this.advLinkInfo.click_link = this.link_form.click_link;
+              this.advLinkInfo.show_link = this.link_form.show_link;
+              this.advLinkInfo.extra_info = this.link_form.extra_info;
+              this.advLinkFormShow = true;
+            });
+          } else {
+            // 校验失败，提示用户
+            this.$message.warning('请填写完整且正确的信息');
+            return false;
+          }
+        });
+      },
+      handlePageChange() {
+        this.listAdData()
+      },
     },
     created() {
       this.queryAdvLink();

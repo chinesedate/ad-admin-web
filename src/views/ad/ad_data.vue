@@ -161,7 +161,7 @@
           <el-table-column
             v-if="!hideTableColum"
             prop="conversion_rate"
-            label="回调有效率">
+            label="回调率">
           </el-table-column>
         </el-table>
         <div class="page-wrapper">

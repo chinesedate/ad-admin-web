@@ -104,6 +104,18 @@
             </template>
           </el-table-column>
           <el-table-column
+            prop="app_name"
+            label="回调率（渠道-应用）">
+          </el-table-column>
+          <el-table-column
+            prop="app_name"
+            label="回调率（客户）">
+          </el-table-column>
+          <el-table-column
+            prop="app_name"
+            label="生效回调率">
+          </el-table-column>
+          <el-table-column
             label="操作">
             <template #default="scope">
               <el-button
@@ -113,13 +125,10 @@
                 @click="startEdit(scope.row)"
               >编辑
               </el-button>
-              <el-button
-                v-else
-                type="success"
-                size="mini"
-                @click="saveEdit(scope.row)"
-              >保存
-              </el-button>
+              <span v-else>
+                <el-button size="mini" @click="cancelEdit(scope.row)" plain>取消</el-button>
+                <el-button type="success" size="mini" @click="saveEdit(scope.row)">保存</el-button>
+              </span>
             </template>
           </el-table-column>
         </el-table>
@@ -236,6 +245,15 @@
         }
         // this.currentEditField = ''
         console.log(this.tableData)
+      },
+      cancelEdit(row) {
+        // 将当前行设置为不编辑状态
+        const index = this.tableData.findIndex(item => item.key_id === row.key_id)
+        if (index !== -1) {
+          const newRow = JSON.parse(JSON.stringify(this.tableData[index]))
+          newRow.editing = false
+          this.$set(this.tableData, index, newRow)
+        }
       },
       handleCellClick(row, column) {
         if (row.editing) {

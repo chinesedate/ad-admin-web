@@ -84,7 +84,9 @@ const routes = [
       {
         path: '',
         name: 'LinkDetail',
-        props: true,
+        props: (route) => ({
+          linkId: Number(route.params.linkId)  // 在这里转换类型
+        }),
         component: () => import('@/views/ad/link/link_detail.vue')
       }
     ],
