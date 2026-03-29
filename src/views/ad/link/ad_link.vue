@@ -71,7 +71,7 @@
             </template>
           </el-table-column>
         </el-table>
-        <div class="page-wrapper">
+        <div ref="pageWrapper" class="page-wrapper">
           <el-pagination class="page-pagination"
                          background
                          :hide-on-single-page="true"
@@ -250,8 +250,10 @@
           }
         );
       },
-      handlePageChange() {
-        this.listAdData()
+      handlePageChange(page) {
+        // 确保 pageNum 被正确设置
+        this.pageNum = page
+        this.listAdLink()
       },
       /**
        * 触发广告主链接列表查询
@@ -363,6 +365,7 @@
           channel_code_value: this.channel_code_value,
           search_keyword: this.search_keyword,
           pageNum: this.pageNum,
+          total: this.total,
           scrollTop: this.$refs.listWrapper?.scrollTop || 0,
           timestamp: Date.now()
         }
@@ -377,9 +380,11 @@
           const state = JSON.parse(savedState)
           this.channel_code_value = state.channel_code_value || ''
           this.search_keyword = state.search_keyword || ''
+          this.total = state.total || 0
+          // 关键修复：先恢复页码，再请求列表
           this.pageNum = state.pageNum || 1
 
-          // 重新加载数据
+          // 传入状态，加载列表
           this.listAdLink(state)
         } else {
           this.listAdLink()
@@ -410,14 +415,15 @@
     created() {
       this.listAdChannelCode();
       // 注意：不在 created 中调用 listAdLink，让 restoreState 决定是否加载
-      // 如果没有保存的状态，才加载初始数据
-      const savedForm = sessionStorage.getItem('adLinkState');
-      if (!savedForm) {
-        this.listAdLink();
-      } else {
-        console.log('AdLink 22222')
-        this.restoreState();
-      }
+      // // 如果没有保存的状态，才加载初始数据
+      // const savedForm = sessionStorage.getItem('adLinkState');
+      // if (!savedForm) {
+      //   console.log('AdLink 23333332222')
+      //   this.listAdLink();
+      // } else {
+      //   console.log('AdLink 22222')
+      //   this.restoreState();
+      // }
       console.log('AdLink created')
     },
     // 使用 beforeRouteEnter 和 beforeRouteLeave
@@ -426,15 +432,17 @@
         // 检查是否从详情页返回
         const fromDetail = from.path.match(/\/ad_link\/\d+$/)
         if (fromDetail) {
+          console.log('111111111111')
           vm.restoreState()
         } else {
-          // 检查是否有保存的状态（浏览器刷新）
-          const savedState = sessionStorage.getItem('adLinkState')
-          if (savedState) {
-            vm.restoreState()
-          } else {
-            vm.listAdLink()
-          }
+          // // 检查是否有保存的状态（浏览器刷新）
+          // const savedState = sessionStorage.getItem('adLinkState')
+          // if (savedState) {
+          //   vm.restoreState()
+          // } else {
+          console.log('222222222222')
+          vm.listAdLink()
+          // }
         }
       })
     },
