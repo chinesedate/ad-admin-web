@@ -104,7 +104,6 @@
           <el-select
             v-model="link_form.channel_code"
             filterable
-            clearable
             placeholder="请选择">
             <el-option
               v-for="item in channel_adv_code_list"
@@ -135,14 +134,14 @@
         <el-form-item label="曝光链接：" prop="show_link">
           <el-input v-model="link_form.show_link" maxlength="4000" show-word-limit placeholder="请输入曝光监测链接"/>
         </el-form-item>
-        <el-form-item label="额外信息：" prop="extra_info">
+        <el-form-item label="备注信息：" prop="extra_info">
           <el-input
             v-model="link_form.extra_info"
             type="textarea"
             :rows="3"
             maxlength="2000"
             show-word-limit
-            placeholder="请输入应用描述"
+            placeholder="请输入备注信息"
           />
         </el-form-item>
       </el-form>

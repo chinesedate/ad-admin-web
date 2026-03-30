@@ -11,6 +11,16 @@
               <span v-if="collapseClose">（点击展开完整信息）</span>
               <span v-else>（点击收起完整信息）</span>
             </div>
+            <div v-if="collapseClose" class="adv-link-info-header-tip">
+              <span class="adv-link-info-header-content"
+                    v-if="advLinkInfo.channel_name">渠道：{{advLinkInfo.channel_name}}</span>
+              <span class="adv-link-info-header-content"
+                    v-if="advLinkInfo.os_type_str">系统类型：{{advLinkInfo.os_type_str}}</span>
+              <span class="adv-link-info-header-content"
+                    v-if="advLinkInfo.app_name">应用名称：{{advLinkInfo.app_name}}</span>
+              <span class="adv-link-info-header-content"
+                    v-if="advLinkInfo.link_code">链接标识：{{advLinkInfo.link_code}}</span>
+            </div>
           </template>
           <!--显示模式-->
           <el-form v-show="advLinkFormShow" :model="advLinkInfo" label-width="100px">
@@ -46,7 +56,7 @@
             <el-form-item class="adv-link-form-item" label="曝光链接：">
               <span>{{advLinkInfo.show_link || '-'}}</span>
             </el-form-item>
-            <el-form-item class="adv-link-form-item" label="额外信息：">
+            <el-form-item class="adv-link-form-item" label="备注信息：">
               <span>{{advLinkInfo.extra_info || '-'}}</span>
             </el-form-item>
             <el-form-item>
@@ -90,14 +100,14 @@
               <el-input v-model="link_form.show_link" maxlength="4000" show-word-limit
                         placeholder="请输入曝光监测链接"/>
             </el-form-item>
-            <el-form-item label="额外信息：" prop="extra_info">
+            <el-form-item label="备注信息：" prop="extra_info">
               <el-input
                 v-model="link_form.extra_info"
                 type="textarea"
                 :rows="3"
                 maxlength="2000"
                 show-word-limit
-                placeholder="请输入应用描述"
+                placeholder="请输入备注信息"
               />
             </el-form-item>
             <el-form-item>
@@ -114,13 +124,13 @@
         <el-form :inline="true" class="pick-form-inline">
           <el-form-item class="pick-form-item" label="渠道名称">
             <el-select
-              v-model="channel_code_value"
+              v-model="channel_media_code_value"
               filterable
               clearable
-              @change="handleAdvLinkQuery"
+              @change="handleMediaLinkQuery"
               placeholder="请选择">
               <el-option
-                v-for="item in ad_channel_code_list"
+                v-for="item in channel_media_code_list"
                 :key="item.value"
                 :label="item.label"
                 :value="item.value">
@@ -132,7 +142,7 @@
               class="adv-link-search"
               clearable
               placeholder="请输入内容"
-              @change="handleAdvLinkQuery"
+              @change="handleMediaLinkQuery"
               prefix-icon="el-icon-search"
               v-model="search_keyword">
             </el-input>
@@ -200,19 +210,18 @@
       :visible.sync="dialogVisible"
       width="800px"
       :close-on-click-modal="false"
-      @close="closeAdLinkAdd"
+      @close="closeMediaLinkAdd"
     >
       <el-form
-        ref="formRef"
-        :model="link_form"
-        :rules="rules"
+        ref="mediaFormRef"
+        :model="media_link_form"
+        :rules="media_rules"
         label-width="100px"
       >
         <el-form-item label="渠道：" prop="channel_code">
           <el-select
-            v-model="link_form.channel_code"
+            v-model="media_link_form.channel_code"
             filterable
-            clearable
             placeholder="请选择">
             <el-option
               v-for="item in channel_media_code_list"
@@ -222,30 +231,22 @@
             </el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="系统类型：" prop="os_type">
-          <el-radio-group v-model="link_form.os_type">
-            <el-radio :label="1">安卓</el-radio>
-            <el-radio :label="2">IOS</el-radio>
-          </el-radio-group>
+        <el-form-item label="回调率：" prop="conversion_rate">
+          <el-select
+            v-model="media_link_form.conversion_rate"
+            filterable
+            placeholder="请选择">
+            <el-option
+              v-for="item in media_conversion_rate_list"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value">
+            </el-option>
+          </el-select>
         </el-form-item>
-        <el-form-item label="应用名称：" prop="app_name">
-          <el-input class="adv-link-item" v-model="link_form.app_name" placeholder="请输入应用名称"/>
-        </el-form-item>
-        <el-form-item label="链接标识：" prop="link_code">
-          <el-input class="adv-link-item" v-model="link_form.link_code" placeholder="请输入链接标识"/>
-        </el-form-item>
-        <el-form-item label="下载链接：" prop="download_link">
-          <el-input v-model="link_form.download_link" maxlength="2000" show-word-limit placeholder="请输入下载链接"/>
-        </el-form-item>
-        <el-form-item label="点击链接：" prop="click_link">
-          <el-input v-model="link_form.click_link" maxlength="4000" show-word-limit placeholder="请输入点击监测链接"/>
-        </el-form-item>
-        <el-form-item label="曝光链接：" prop="show_link">
-          <el-input v-model="link_form.show_link" maxlength="4000" show-word-limit placeholder="请输入曝光监测链接"/>
-        </el-form-item>
-        <el-form-item label="额外信息：" prop="extra_info">
+        <el-form-item label="备注信息：" prop="extra_info">
           <el-input
-            v-model="link_form.extra_info"
+            v-model="media_link_form.extra_info"
             type="textarea"
             :rows="3"
             maxlength="2000"
@@ -266,7 +267,7 @@
 </template>
 
 <script>
-  import {addAdvLink, fetchAdChannelCodeList, getAdvLink, updateAdvLink} from "@/api/ad-data";
+  import {addAdvLink, fetchAdChannelCodeList, getAdvLink, pageListAdLink, updateAdvLink} from "@/api/ad-data";
 
   export default {
     name: "LinkDetail",
@@ -289,6 +290,13 @@
         submitLoading: false,
         // 媒体渠道标识列表
         channel_media_code_list: [],
+        channel_media_code_value: '',
+        // 媒体渠道标识列表
+        media_conversion_rate_list: [
+          {value: 10, label: '100%'}, {value: 9, label: '90%'}, {value: 8, label: '80%'},
+          {value: 7, label: '70%'}, {value: 6, label: '60%'}, {value: 5, label: '50%'},
+          {value: 4, label: '40%'}, {value: 3, label: '30%'}, {value: 2, label: '20%'},
+          {value: 1, label: '10%'}],
         /**
          * 广告主链接信息
          */
@@ -325,6 +333,37 @@
           show_link: [
             {type: 'url', message: '请输入正确的URL地址', trigger: 'blur'}
           ]
+        },
+        media_link_form: {
+          channel_code: '',
+          conversion_rate: 10,
+          os_type: 1,
+          app_name: '',
+          link_code: '',
+          download_link: '',
+          click_link: '',
+          show_link: '',
+          extra_info: ''
+        },
+        media_rules: {
+          channel_code: [
+            {required: true, message: '请输入渠道编码', trigger: 'blur'}
+          ],
+          conversion_rate: [
+            {required: true}
+          ],
+          app_name: [
+            {required: true, message: '请输入应用名称', trigger: 'blur'}
+          ],
+          download_link: [
+            {type: 'url', message: '请输入正确的URL地址', trigger: 'blur'}
+          ],
+          click_link: [
+            {type: 'url', message: '请输入正确的URL地址', trigger: 'blur'}
+          ],
+          show_link: [
+            {type: 'url', message: '请输入正确的URL地址', trigger: 'blur'}
+          ]
         }
       }
     },
@@ -341,6 +380,10 @@
        */
       activeMediaLinkAdd() {
         this.dialogVisible = true
+      },
+      closeMediaLinkAdd() {
+        // 关闭时重置表单
+        this.$refs.mediaFormRef.resetFields()
       },
       /**
        * 折叠面板展开或收起触发
@@ -383,7 +426,7 @@
               this.advLinkInfo.os_type_str = "IOS"
             }
             // 查询当前广告主关联的媒体
-            this.listAdChannelCode();
+            this.listAdChannelMediaCode();
           }
         });
       },
@@ -448,7 +491,48 @@
       handlePageChange() {
         this.listAdData()
       },
-      listAdChannelCode() {
+      /**
+       * 查询媒体链接列表
+       */
+      handleMediaLinkQuery() {
+        // 触发查询
+        this.pageNum = 1;
+        this.listAdMediaLink();
+      },
+      /**
+       * 查询媒体链接列表
+       */
+      listAdMediaLink() {
+        let ad_link_query_param = {
+          channel_code: this.channel_code_value,
+          keyword: this.search_keyword
+        }
+        pageListAdLink({
+            page_num: this.pageNum,
+            page_size: this.pageSize,
+            query_param: ad_link_query_param
+          }
+        ).then(res => {
+            if (res.data.data != null) {
+              this.tableData = res.data.data.list;
+              for (const adv_link of this.tableData) {
+                const os_type = adv_link.os_type;
+                if (os_type === 1) {
+                  adv_link.os_type = "安卓"
+                } else if (os_type === 2) {
+                  adv_link.os_type = "IOS"
+                }
+              }
+              this.total = res.data.data.total;
+              this.hasNext = res.data.data.hasNext;
+            }
+          }
+        );
+      },
+      /**
+       * 查询广告主链接关联的媒体渠道标识
+       */
+      listAdChannelMediaCode() {
         // 查询广告渠道标识筛选信息
         fetchAdChannelCodeList({
           up_down_type: 0, //  渠道上下游类型 0 （媒体）  1 （广告主）
@@ -510,6 +594,10 @@
 
   .adv-link-info-header-tip {
     margin-left: 10px;
+  }
+
+  .adv-link-info-header-content {
+    margin-left: 30px;
   }
 
   .audit-tool-list-header {
