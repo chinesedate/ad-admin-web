@@ -178,12 +178,12 @@
           <el-table-column
             label="操作">
             <template #default="scope">
-              <el-button class="adv-link-operate-button" type="primary" size="mini"
-                         @click="modifyLinkDetail(scope.row.id)">详情
+              <el-button class="media-link-operate-button" type="primary" size="mini"
+                         @click="showMediaLinkDetail(scope.row.id)">详情
               </el-button>
-              <el-popconfirm title="确定删除吗？" @confirm="handleAdvLinkRemove(scope.row)">
+              <el-popconfirm title="确定删除吗？" @confirm="handleMediaLinkRemove(scope.row)">
                 <template #reference>
-                  <el-button class="adv-link-operate-button" type="danger" size="mini">删除</el-button>
+                  <el-button class="media-link-operate-button" type="danger" size="mini">删除</el-button>
                 </template>
               </el-popconfirm>
             </template>
@@ -267,7 +267,14 @@
 </template>
 
 <script>
-  import {addAdvLink, fetchAdChannelCodeList, getAdvLink, pageListAdLink, updateAdvLink} from "@/api/ad-data";
+  import {
+    addAdvLink,
+    fetchAdChannelCodeList,
+    getAdvLink,
+    pageListAdLink,
+    removeAdvLink,
+    updateAdvLink
+  } from "@/api/ad-data";
 
   export default {
     name: "LinkDetail",
@@ -499,6 +506,28 @@
         this.pageNum = 1;
         this.listAdMediaLink();
       },
+      // 跳转详情
+      showMediaLinkDetail(id) {
+        // 保存当前状态
+        this.saveCurrentState()
+        // 跳转到详情页
+        this.$router.push({
+          path: `/ad_link/${id}`,
+          query: {fromList: 'true'}
+        })
+      },
+      /**
+       * 删除链接
+       */
+      handleMediaLinkRemove(item) {
+        const link_id = item.id;
+        // 删除广告主链接
+        removeAdvLink(link_id).then(() => {
+          this.pageNum = 1;
+          // 删除成功后，刷新数据列表
+          this.listAdLink();
+        })
+      },
       /**
        * 查询媒体链接列表
        */
@@ -623,11 +652,16 @@
   }
 
   .page-wrapper {
-    position: absolute;
-    bottom: 0;
+    //position: absolute;
+    //bottom: 0;
+    margin-top: 20px;
     width: 100%;
     display: flex;
     justify-content: center;
+  }
+
+  .media-link-operate-button {
+    margin-right: 10px;
   }
 
   .audit-tool {
