@@ -127,11 +127,12 @@ export function updateAdvLink(data) {
 }
 
 /**
- * 统计待审核工具分类数量
+ * 添加媒体链接
  */
-export function countAuditToolCategory() {
+export function addMediaLink(data) {
   return request({
-    url: '/api/adm/audit/category/count',
-    method: 'get'
-  })
+    url: '/track/admin/media-link',
+    method: 'post',
+    data
+  });
 }

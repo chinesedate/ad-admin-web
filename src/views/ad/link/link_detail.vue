@@ -124,7 +124,7 @@
         <el-form :inline="true" class="pick-form-inline">
           <el-form-item class="pick-form-item" label="渠道名称">
             <el-select
-              v-model="channel_media_code_value"
+              v-model="filter_media_code_value"
               filterable
               clearable
               @change="handleMediaLinkQuery"
@@ -268,7 +268,7 @@
 
 <script>
   import {
-    addAdvLink,
+    addMediaLink,
     fetchAdChannelCodeList,
     getAdvLink,
     pageListAdLink,
@@ -297,13 +297,6 @@
         submitLoading: false,
         // 媒体渠道标识列表
         channel_media_code_list: [],
-        channel_media_code_value: '',
-        // 媒体渠道标识列表
-        media_conversion_rate_list: [
-          {value: 10, label: '100%'}, {value: 9, label: '90%'}, {value: 8, label: '80%'},
-          {value: 7, label: '70%'}, {value: 6, label: '60%'}, {value: 5, label: '50%'},
-          {value: 4, label: '40%'}, {value: 3, label: '30%'}, {value: 2, label: '20%'},
-          {value: 1, label: '10%'}],
         /**
          * 广告主链接信息
          */
@@ -327,6 +320,10 @@
           show_link: '',
           extra_info: ''
         },
+        // 媒体链接列表过滤渠道标识
+        filter_media_code_value: '',
+        // 媒体链接列表搜索关键词
+        search_keyword: '',
         rules: {
           app_name: [
             {required: true, message: '请输入应用名称', trigger: 'blur'}
@@ -344,12 +341,6 @@
         media_link_form: {
           channel_code: '',
           conversion_rate: 10,
-          os_type: 1,
-          app_name: '',
-          link_code: '',
-          download_link: '',
-          click_link: '',
-          show_link: '',
           extra_info: ''
         },
         media_rules: {
@@ -371,7 +362,13 @@
           show_link: [
             {type: 'url', message: '请输入正确的URL地址', trigger: 'blur'}
           ]
-        }
+        },
+        // 媒体渠道标识列表
+        media_conversion_rate_list: [
+          {value: 10, label: '100%'}, {value: 9, label: '90%'}, {value: 8, label: '80%'},
+          {value: 7, label: '70%'}, {value: 6, label: '60%'}, {value: 5, label: '50%'},
+          {value: 4, label: '40%'}, {value: 3, label: '30%'}, {value: 2, label: '20%'},
+          {value: 1, label: '10%'}],
       }
     },
     methods: {
@@ -479,16 +476,12 @@
        */
       handleMediaLinkAdd() {
         const adv_link_info = {
-          channel_code: this.link_form.channel_code,
-          os_type: this.link_form.os_type,
-          app_name: this.link_form.app_name,
-          link_code: this.link_form.link_code,
-          download_link: this.link_form.download_link,
-          click_link: this.link_form.click_link,
-          show_link: this.link_form.show_link,
-          extra_info: this.link_form.extra_info
+          adv_link_id: this.linkId,
+          os_type: this.media_link_form.channel_code,
+          conversion_rate: this.media_link_form.conversion_rate,
+          extra_info: this.media_link_form.conversion_rate
         }
-        addAdvLink(adv_link_info).then(res => {
+        addMediaLink(adv_link_info).then(res => {
             console.log('广告主链接添加完成:', res)
             this.dialogVisible = true;
             this.closeAdLinkAdd();
