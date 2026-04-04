@@ -171,8 +171,6 @@
                          :current-page.sync="pageNum"
                          :page-size="pageSize"
                          @current-change="handlePageChange"
-                         @prev-click="handlePageChange"
-                         @next-click="handlePageChange"
                          layout="prev, pager, next"
                          :total="total">
           </el-pagination>
@@ -311,6 +309,7 @@
         this.hideTableColum = !this.hideTableColum;
       },
       handlePageChange() {
+        console.log('1121')
         this.listAdData()
       },
       handleDatePick() {

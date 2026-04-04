@@ -196,8 +196,6 @@
                          :current-page="currentPage"
                          :page-size="pageSize"
                          @current-change="handlePageChange"
-                         @prev-click="handlePageChange"
-                         @next-click="handlePageChange"
                          layout="prev, pager, next"
                          :total="total">
           </el-pagination>
