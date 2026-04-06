@@ -165,15 +165,15 @@
           </el-table-column>
           <el-table-column
             prop="os_type"
-            label="系统类型">
+            label="渠道ID">
           </el-table-column>
           <el-table-column
             prop="app_name"
-            label="应用名称">
+            label="客户ID">
           </el-table-column>
           <el-table-column
             prop="link_code"
-            label="链接标识">
+            label="应用ID">
           </el-table-column>
           <el-table-column
             label="操作">
@@ -269,9 +269,9 @@
     addMediaLink,
     fetchAdChannelCodeList,
     getAdvLink,
-    pageListAdLink,
     removeAdvLink,
-    updateAdvLink
+    updateAdvLink,
+    pageListMediaLink
   } from "@/api/ad-data";
 
   export default {
@@ -475,9 +475,9 @@
       handleMediaLinkAdd() {
         const adv_link_info = {
           adv_link_id: this.linkId,
-          os_type: this.media_link_form.channel_code,
+          channel_code: this.media_link_form.channel_code,
           conversion_rate: this.media_link_form.conversion_rate,
-          extra_info: this.media_link_form.conversion_rate
+          extra_info: this.media_link_form.extra_info
         }
         addMediaLink(adv_link_info).then(res => {
             console.log('广告主链接添加完成:', res)
@@ -516,7 +516,7 @@
         removeAdvLink(link_id).then(() => {
           this.pageNum = 1;
           // 删除成功后，刷新数据列表
-          this.listAdLink();
+          this.listAdMediaLink();
         })
       },
       /**
@@ -527,7 +527,7 @@
           channel_code: this.channel_code_value,
           keyword: this.search_keyword
         }
-        pageListAdLink({
+        pageListMediaLink({
             page_num: this.pageNum,
             page_size: this.pageSize,
             query_param: ad_link_query_param
@@ -535,14 +535,14 @@
         ).then(res => {
             if (res.data.data != null) {
               this.tableData = res.data.data.list;
-              for (const adv_link of this.tableData) {
-                const os_type = adv_link.os_type;
-                if (os_type === 1) {
-                  adv_link.os_type = "安卓"
-                } else if (os_type === 2) {
-                  adv_link.os_type = "IOS"
-                }
-              }
+              // for (const adv_link of this.tableData) {
+              //   const os_type = adv_link.os_type;
+              //   if (os_type === 1) {
+              //     adv_link.os_type = "安卓"
+              //   } else if (os_type === 2) {
+              //     adv_link.os_type = "IOS"
+              //   }
+              // }
               this.total = res.data.data.total;
               this.hasNext = res.data.data.hasNext;
             }
@@ -572,6 +572,7 @@
     },
     created() {
       this.queryAdvLink();
+      this.listAdMediaLink();
     }
   }
 </script>

@@ -124,13 +124,16 @@
           <el-input class="adv-link-item" v-model="link_form.link_code" placeholder="请输入链接标识"/>
         </el-form-item>
         <el-form-item label="下载链接：" prop="download_link">
-          <el-input v-model="link_form.download_link" maxlength="2000" show-word-limit placeholder="请输入下载链接"/>
+          <el-input v-model="link_form.download_link" class="adv-link-input" maxlength="2000" show-word-limit
+                    placeholder="请输入下载链接"/>
         </el-form-item>
         <el-form-item label="点击链接：" prop="click_link">
-          <el-input v-model="link_form.click_link" maxlength="4000" show-word-limit placeholder="请输入点击监测链接"/>
+          <el-input v-model="link_form.click_link" class="adv-link-input" maxlength="4000" show-word-limit
+                    placeholder="请输入点击监测链接"/>
         </el-form-item>
         <el-form-item label="曝光链接：" prop="show_link">
-          <el-input v-model="link_form.show_link" maxlength="4000" show-word-limit placeholder="请输入曝光监测链接"/>
+          <el-input v-model="link_form.show_link" class="adv-link-input" maxlength="4000" show-word-limit
+                    placeholder="请输入曝光监测链接"/>
         </el-form-item>
         <el-form-item label="备注信息：" prop="extra_info">
           <el-input
@@ -315,11 +318,12 @@
        * 触发添加链接
        */
       activeAdLinkAdd() {
-        this.dialogVisible = true
+        this.dialogVisible = true;
       },
       closeAdLinkAdd() {
         // 关闭时重置表单
-        this.$refs.formRef.resetFields()
+        this.$refs.formRef.resetFields();
+        this.dialogVisible = false;
       },
       /**
        * 添加广告主链接
@@ -553,5 +557,9 @@
 
   .adv-link-operate-button {
     margin-right: 10px;
+  }
+
+  .adv-link-input ::v-deep .el-input__inner {
+    padding-right: 70px; /* 为统计数字留出空间 */
   }
 </style>

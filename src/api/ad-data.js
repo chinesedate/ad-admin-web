@@ -136,3 +136,14 @@ export function addMediaLink(data) {
     data
   });
 }
+
+/**
+ * 查询媒体链接列表
+ */
+export function pageListMediaLink(data) {
+  return request({
+    url: '/track/admin/media-link-list',
+    method: 'post',
+    data
+  })
+}
