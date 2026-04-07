@@ -158,22 +158,67 @@
           @cell-click="handleCellClick"
           stripe
           style="width: 100%">
+          <el-table-column type="expand">
+            <template #default="props">
+              <div class="expand-container">
+                <!-- 复制全部按钮 -->
+                <div class="expand-header">
+                  <span class="expand-title">详细信息</span>
+                  <el-button
+                    type="primary"
+                    size="small"
+                    @click="copyAllExpandContent(props.row)"
+                    :loading="copyAllLoading"
+                  >复制信息
+                  </el-button>
+                </div>
+                <el-form label-position="left" class="media-table-expand">
+                  <el-form-item label="应用名称：">
+                    <span class="selectable-text">{{advLinkInfo.app_name || '-'}}</span>
+                  </el-form-item>
+                  <el-form-item label="系统类型：">
+                    <span class="selectable-text">{{advLinkInfo.os_type_str || '-'}}</span>
+                  </el-form-item>
+                  <el-form-item label="备注信息：">
+                    <span class="selectable-text">{{props.row.extra_info || '-'}}</span>
+                  </el-form-item>
+                  <el-form-item label="下载链接：">
+                    <span class="selectable-text">{{advLinkInfo.download_link || '-'}}</span>
+                  </el-form-item>
+                  <el-form-item label="点击监测：">
+                    <span class="selectable-text">{{props.row.click_link || '-'}}</span>
+                  </el-form-item>
+                  <el-form-item label="曝光监测：">
+                    <span class="selectable-text">{{props.row.show_link || '-'}}</span>
+                  </el-form-item>
+                </el-form>
+              </div>
+            </template>
+          </el-table-column>
           <el-table-column
             prop="channel_name"
             label="渠道名称"
             width="180">
           </el-table-column>
           <el-table-column
-            prop="os_type"
+            prop="channel_id"
             label="渠道ID">
           </el-table-column>
           <el-table-column
-            prop="app_name"
+            prop="customer_id"
             label="客户ID">
           </el-table-column>
           <el-table-column
-            prop="link_code"
+            prop="app_id"
             label="应用ID">
+          </el-table-column>
+          <el-table-column
+            prop="conversion_rate_label"
+            label="回调率">
+          </el-table-column>
+          <el-table-column
+            prop="create_time"
+            label="添加时间">
           </el-table-column>
           <el-table-column
             label="操作">
@@ -181,9 +226,13 @@
               <el-button class="media-link-operate-button" type="primary" size="mini"
                          @click="showMediaLinkDetail(scope.row.id)">详情
               </el-button>
-              <el-popconfirm title="确定删除吗？" @confirm="handleMediaLinkRemove(scope.row)">
+              <el-button class="media-link-operate-button" type="primary" size="mini"
+                         @click="showMediaLinkDetail(scope.row.id)">编辑
+              </el-button>
+              <el-popconfirm title="确定删除吗？" class="media-link-operate-button"
+                             @confirm="handleMediaLinkRemove(scope.row)">
                 <template #reference>
-                  <el-button class="media-link-operate-button" type="danger" size="mini">删除</el-button>
+                  <el-button type="danger" size="mini">删除</el-button>
                 </template>
               </el-popconfirm>
             </template>
@@ -284,7 +333,7 @@
         // 折叠面板展开收起状态
         collapseClose: true,
         advLinkFormShow: true,
-        pageNum: 0,
+        pageNum: 1,
         pageSize: 10,
         total: 0,
         hasNext: false,
@@ -367,6 +416,8 @@
           {value: 7, label: '70%'}, {value: 6, label: '60%'}, {value: 5, label: '50%'},
           {value: 4, label: '40%'}, {value: 3, label: '30%'}, {value: 2, label: '20%'},
           {value: 1, label: '10%'}],
+        // 复制按钮loading
+        copyAllLoading: false,
       }
     },
     methods: {
@@ -535,14 +586,10 @@
         ).then(res => {
             if (res.data.data != null) {
               this.tableData = res.data.data.list;
-              // for (const adv_link of this.tableData) {
-              //   const os_type = adv_link.os_type;
-              //   if (os_type === 1) {
-              //     adv_link.os_type = "安卓"
-              //   } else if (os_type === 2) {
-              //     adv_link.os_type = "IOS"
-              //   }
-              // }
+              for (const media_link of this.tableData) {
+                const conversion_rate = media_link.conversion_rate;
+                media_link.conversion_rate_label = conversion_rate * 10 + '%'
+              }
               this.total = res.data.data.total;
               this.hasNext = res.data.data.hasNext;
             }
@@ -568,7 +615,78 @@
             }
           }
         );
+      }, /**
+       * 复制展开行的全部内容
+       * @param {Object} row 当前行数据
+       */
+      async copyAllExpandContent(row) {
+        this.copyAllLoading = true;
+
+        try {
+          // 收集所有需要复制的字段
+          const copyData = [
+            {label: '应用名称', value: this.advLinkInfo.app_name || '-'},
+            {label: '系统类型', value: this.advLinkInfo.os_type_str || '-'},
+            {label: '备注信息', value: row.extra_info || '-'},
+            {label: '下载链接', value: this.advLinkInfo.download_link || '-'},
+            {label: '点击监测', value: row.click_link || '-'},
+            {label: '曝光监测', value: row.show_link || '-'}
+          ];
+
+          // 格式化为文本
+          const formattedText = copyData.map(item => `${item.label}：${item.value}`).join('\n');
+
+          // 复制到剪贴板
+          await this.copyToClipboard(formattedText);
+          this.$message.success('复制成功');
+        } catch (error) {
+          console.error('复制失败:', error);
+          this.$message.error('复制失败，请重试');
+        } finally {
+          this.copyAllLoading = false;
+        }
       },
+
+      /**
+       * 复制文本到剪贴板
+       * @param {string} text 要复制的文本
+       * @returns {Promise}
+       */
+      copyToClipboard(text) {
+        return new Promise((resolve, reject) => {
+          if (!text) {
+            reject(new Error('没有可复制的内容'));
+            return;
+          }
+
+          // 使用现代 Clipboard API
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(resolve).catch(reject);
+          } else {
+            // 降级方案
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.top = '-9999px';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+
+            try {
+              const success = document.execCommand('copy');
+              if (success) {
+                resolve();
+              } else {
+                reject(new Error('复制失败'));
+              }
+            } catch (err) {
+              reject(err);
+            } finally {
+              document.body.removeChild(textarea);
+            }
+          }
+        });
+      }
     },
     created() {
       this.queryAdvLink();
@@ -584,6 +702,16 @@
 
   .adv-link-wrapper {
     padding-top: 40px;
+
+    .el-form-item {
+      margin-right: 0;
+      margin-bottom: 10px;
+      width: 100%;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
   }
 
   .ellipsis-link {
@@ -653,16 +781,62 @@
   }
 
   .media-link-operate-button {
-    margin-right: 10px;
+    margin-left: 10px;
+
+    &:first-child {
+      margin-left: 0;
+    }
   }
 
-  .audit-tool {
-    height: 50px;
-    padding-bottom: 10px;
-    cursor: default;
+  .expand-container {
+    padding: 16px;
+    background-color: #fafafa;
+    border-radius: 4px;
   }
 
-  .tool-content {
-    cursor: pointer;
+  .expand-header {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e4e7ed;
+    text-align: left; // 确保左对齐
+  }
+
+  .expand-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #303133;
+    margin-right: 20px;
+  }
+
+  .media-table-expand {
+    font-size: 0;
+
+    .el-form-item {
+      margin-right: 0;
+      margin-bottom: 0;
+      width: 100%;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+
+    label {
+      width: 90px;
+      color: #606266;
+      font-weight: normal;
+      user-select: text;
+    }
+
+    .selectable-text {
+      user-select: text;
+      -webkit-user-select: text;
+      -moz-user-select: text;
+      -ms-user-select: text;
+      word-break: break-all;
+      line-height: 1.5;
+      color: #606266;
+      display: inline-block;
+    }
   }
 </style>

@@ -58,6 +58,10 @@
             label="链接标识">
           </el-table-column>
           <el-table-column
+            prop="create_time"
+            label="添加时间">
+          </el-table-column>
+          <el-table-column
             label="操作">
             <template #default="scope">
               <el-button class="adv-link-operate-button" type="primary" size="mini"
