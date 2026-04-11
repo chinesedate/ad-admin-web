@@ -24,7 +24,7 @@
               class="adv-link-search"
               clearable
               placeholder="请输入内容"
-              @change="handleAdvLinkQuery"
+              @input="handleAdvLinkQuery"
               prefix-icon="el-icon-search"
               v-model="search_keyword">
             </el-input>
@@ -40,6 +40,11 @@
           @cell-click="handleCellClick"
           stripe
           style="width: 100%">
+          <el-table-column
+            prop="id"
+            label="链接id"
+            width="180">
+          </el-table-column>
           <el-table-column
             prop="channel_name"
             label="渠道名称"
@@ -325,9 +330,9 @@
         this.dialogVisible = true;
       },
       closeAdLinkAdd() {
+        this.dialogVisible = false;
         // 关闭时重置表单
         this.$refs.formRef.resetFields();
-        this.dialogVisible = false;
       },
       /**
        * 添加广告主链接
@@ -345,7 +350,6 @@
         }
         addAdvLink(adv_link_info).then(res => {
             console.log('广告主链接添加完成:', res)
-            this.dialogVisible = false;
             this.closeAdLinkAdd();
             // 刷新广告主链接列表
             this.listAdLink()

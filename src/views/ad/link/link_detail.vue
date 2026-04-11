@@ -142,6 +142,7 @@
               class="adv-link-search"
               clearable
               placeholder="请输入内容"
+              @input="handleMediaLinkQuery"
               @change="handleMediaLinkQuery"
               prefix-icon="el-icon-search"
               v-model="search_keyword">
@@ -155,6 +156,8 @@
           :data="tableData"
           ref="adDataTable"
           row-key="id"
+          :expand-row-keys="expandRowKeys"
+          @expand-change="handleExpandChange"
           @cell-click="handleCellClick"
           stripe
           style="width: 100%">
@@ -188,12 +191,17 @@
                   <el-form-item label="点击监测：">
                     <span class="selectable-text">{{props.row.click_link || '-'}}</span>
                   </el-form-item>
-                  <el-form-item label="曝光监测：">
+                  <el-form-item v-if="props.row.show_link" label="曝光监测：">
                     <span class="selectable-text">{{props.row.show_link || '-'}}</span>
                   </el-form-item>
                 </el-form>
               </div>
             </template>
+          </el-table-column>
+          <el-table-column
+            prop="id"
+            label="链接id"
+            width="180">
           </el-table-column>
           <el-table-column
             prop="channel_name"
@@ -223,11 +231,16 @@
           <el-table-column
             label="操作">
             <template #default="scope">
-              <el-button class="media-link-operate-button" type="primary" size="mini"
-                         @click="showMediaLinkDetail(scope.row.id)">详情
+              <el-button
+                class="media-link-operate-button"
+                :type="isRowExpanded(scope.row) ? 'info' : 'primary'"
+                size="mini"
+                @click="toggleExpand(scope.row)">
+                {{isRowExpanded(scope.row) ? '收起' : '详情'}}
               </el-button>
               <el-button class="media-link-operate-button" type="primary" size="mini"
-                         @click="showMediaLinkDetail(scope.row.id)">编辑
+                         @click="activeMediaLinkModify(scope.row)">
+                编辑
               </el-button>
               <el-popconfirm title="确定删除吗？" class="media-link-operate-button"
                              @confirm="handleMediaLinkRemove(scope.row)">
@@ -242,7 +255,7 @@
           <el-pagination class="page-pagination"
                          background
                          :hide-on-single-page="true"
-                         :current-page="currentPage"
+                         :current-page="pageNum"
                          :page-size="pageSize"
                          @current-change="handlePageChange"
                          layout="prev, pager, next"
@@ -310,6 +323,52 @@
         </el-button>
       </span>
     </el-dialog>
+    <!-- 编辑链接弹框 -->
+    <el-dialog
+      title="媒体链接"
+      :visible.sync="modifyDialogVisible"
+      width="800px"
+      :close-on-click-modal="false"
+      @close="closeMediaLinkModify"
+    >
+      <el-form
+        ref="mediaFormModifyRef"
+        :model="media_link_modify_form"
+        :rules="media_modify_rules"
+        label-width="100px"
+      >
+        <el-form-item label="回调率：" prop="conversion_rate">
+          <el-select
+            v-model="media_link_modify_form.conversion_rate"
+            filterable
+            placeholder="请选择">
+            <el-option
+              v-for="item in media_conversion_rate_list"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value">
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="备注信息：" prop="extra_info">
+          <el-input
+            v-model="media_link_modify_form.extra_info"
+            type="textarea"
+            :rows="3"
+            maxlength="2000"
+            show-word-limit
+            placeholder="请输入应用描述"
+          />
+        </el-form-item>
+      </el-form>
+
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="modifyDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="submitLoading" @click="handleMediaLinkModify">
+          确定
+        </el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -318,9 +377,9 @@
     addMediaLink,
     fetchAdChannelCodeList,
     getAdvLink,
-    removeAdvLink,
     updateAdvLink,
-    pageListMediaLink
+    pageListMediaLink,
+    removeMediaLink, updateMediaLink
   } from "@/api/ad-data";
 
   export default {
@@ -334,16 +393,24 @@
         collapseClose: true,
         advLinkFormShow: true,
         pageNum: 1,
-        pageSize: 10,
+        pageSize: 8,
         total: 0,
         hasNext: false,
-        currentPage: 1,
         // 媒体链接数据列表
         tableData: [],
+        /**
+         * 添加链接弹框显示状态
+         */
         dialogVisible: false,
+        /**
+         * 编辑链接弹框显示状态
+         */
+        modifyDialogVisible: false,
         submitLoading: false,
         // 媒体渠道标识列表
         channel_media_code_list: [],
+        // 展开行的keys数组，同时只能展开一行
+        expandRowKeys: [],
         /**
          * 广告主链接信息
          */
@@ -396,19 +463,15 @@
           ],
           conversion_rate: [
             {required: true}
-          ],
-          app_name: [
-            {required: true, message: '请输入应用名称', trigger: 'blur'}
-          ],
-          download_link: [
-            {type: 'url', message: '请输入正确的URL地址', trigger: 'blur'}
-          ],
-          click_link: [
-            {type: 'url', message: '请输入正确的URL地址', trigger: 'blur'}
-          ],
-          show_link: [
-            {type: 'url', message: '请输入正确的URL地址', trigger: 'blur'}
           ]
+        },
+        media_link_modify_form: {
+          id: '',
+          conversion_rate: 10,
+          extra_info: ''
+        },
+        media_modify_rules: {
+          conversion_rate: [{required: true}]
         },
         // 媒体渠道标识列表
         media_conversion_rate_list: [
@@ -435,8 +498,25 @@
         this.dialogVisible = true
       },
       closeMediaLinkAdd() {
+        this.dialogVisible = false
         // 关闭时重置表单
         this.$refs.mediaFormRef.resetFields()
+      },
+      /**
+       * 触发媒体链接编辑弹框
+       */
+      activeMediaLinkModify(row) {
+        this.media_link_modify_form = {
+          id: row.id,
+          conversion_rate: row.conversion_rate,
+          extra_info: row.extra_info
+        }
+        this.modifyDialogVisible = true;
+      },
+      closeMediaLinkModify() {
+        this.modifyDialogVisible = false;
+        // 关闭时重置表单
+        this.$refs.mediaFormModifyRef.resetFields()
       },
       /**
        * 折叠面板展开或收起触发
@@ -532,13 +612,38 @@
         }
         addMediaLink(adv_link_info).then(res => {
             console.log('广告主链接添加完成:', res)
-            this.dialogVisible = true;
-            this.closeAdLinkAdd();
+            this.closeMediaLinkAdd();
+            this.listAdMediaLink();
           }
         );
       },
-      handlePageChange() {
-        this.listAdData()
+      /**
+       * 编辑媒体链接
+       */
+      handleMediaLinkModify() {
+        const media_link_info = {
+          id: this.media_link_modify_form.id,
+          conversion_rate: this.media_link_modify_form.conversion_rate,
+          extra_info: this.media_link_modify_form.extra_info
+        }
+        updateMediaLink(media_link_info).then(res => {
+            console.log('媒体链接信息更新完成:', res)
+            const index = this.tableData.findIndex(item => item.id === this.media_link_modify_form.id)
+            if (index !== -1) {
+              const newRow = JSON.parse(JSON.stringify(this.tableData[index]))
+              newRow.conversion_rate = this.media_link_modify_form.conversion_rate
+              newRow.conversion_rate_label = this.media_link_modify_form.conversion_rate * 10 + '%'
+              newRow.extra_info = this.media_link_modify_form.extra_info
+              this.$set(this.tableData, index, newRow)
+            }
+            this.closeMediaLinkModify();
+          }
+        );
+      },
+      handlePageChange(page) {
+        // 确保 pageNum 被正确设置
+        this.pageNum = page
+        this.listAdMediaLink();
       },
       /**
        * 查询媒体链接列表
@@ -548,23 +653,63 @@
         this.pageNum = 1;
         this.listAdMediaLink();
       },
-      // 跳转详情
-      showMediaLinkDetail(id) {
-        // 保存当前状态
-        this.saveCurrentState()
-        // 跳转到详情页
-        this.$router.push({
-          path: `/ad_link/${id}`,
-          query: {fromList: 'true'}
-        })
+      /**
+       * 判断当前行是否展开
+       * @param {Object} row 当前行数据
+       * @returns {Boolean} 是否展开
+       */
+      isRowExpanded(row) {
+        return this.expandRowKeys.includes(row.id);
+      },
+      /**
+       * 处理单元格点击事件 - 点击非操作列的行首展开按钮区域时触发
+       */
+      handleCellClick(row, column) {
+        // 检查点击的是否是展开按钮所在单元格（第一列）
+        const isExpandColumn = column.type === 'expand';
+        if (isExpandColumn) {
+          this.toggleExpand(row);
+        }
+      },
+      /**
+       * 切换行的展开/收起状态
+       * @param {Object} row 当前行数据
+       */
+      toggleExpand(row) {
+        const rowKey = row.id;
+        const index = this.expandRowKeys.indexOf(rowKey);
+
+        if (index > -1) {
+          // 如果已经展开，则收起
+          this.expandRowKeys = [];
+        } else {
+          // 如果未展开，则展开当前行并收起其他行
+          this.expandRowKeys = [rowKey];
+        }
+      },
+      /**
+       * 处理表格展开/收起事件
+       * @param {*} row 当前行数据
+       * @param {Array} expandedRows 展开的行数组
+       */
+      handleExpandChange(row, expandedRows) {
+        const rowKey = row.id;
+
+        if (expandedRows.length > 0) {
+          // 展开时，只保留当前展开的行
+          this.expandRowKeys = [rowKey];
+        } else {
+          // 收起时，清空展开的行
+          this.expandRowKeys = [];
+        }
       },
       /**
        * 删除链接
        */
-      handleMediaLinkRemove(item) {
-        const link_id = item.id;
+      handleMediaLinkRemove(row) {
+        const media_link_id = row.id;
         // 删除广告主链接
-        removeAdvLink(link_id).then(() => {
+        removeMediaLink(media_link_id).then(() => {
           this.pageNum = 1;
           // 删除成功后，刷新数据列表
           this.listAdMediaLink();
@@ -575,7 +720,7 @@
        */
       listAdMediaLink() {
         let ad_link_query_param = {
-          channel_code: this.channel_code_value,
+          channel_code: this.filter_media_code_value,
           keyword: this.search_keyword
         }
         pageListMediaLink({
@@ -592,6 +737,8 @@
               }
               this.total = res.data.data.total;
               this.hasNext = res.data.data.hasNext;
+              // 刷新数据后，清空展开的行（避免数据错位）
+              this.expandRowKeys = [];
             }
           }
         );
@@ -629,9 +776,11 @@
             {label: '系统类型', value: this.advLinkInfo.os_type_str || '-'},
             {label: '备注信息', value: row.extra_info || '-'},
             {label: '下载链接', value: this.advLinkInfo.download_link || '-'},
-            {label: '点击监测', value: row.click_link || '-'},
-            {label: '曝光监测', value: row.show_link || '-'}
+            {label: '点击监测', value: row.click_link || '-'}
           ];
+          if (row.show_link) {
+            copyData.push({label: '曝光监测', value: row.show_link || '-'})
+          }
 
           // 格式化为文本
           const formattedText = copyData.map(item => `${item.label}：${item.value}`).join('\n');

@@ -147,3 +147,24 @@ export function pageListMediaLink(data) {
     data
   })
 }
+
+/**
+ * 更新媒体链接信息
+ */
+export function updateMediaLink(data) {
+  return request({
+    url: '/track/admin/media-link',
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 删除媒体链接
+ */
+export function removeMediaLink(id) {
+  return request({
+    url: `/track/admin/media-link/${id}`,
+    method: 'delete'
+  });
+}
