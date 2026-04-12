@@ -388,6 +388,7 @@
               channel_code: this.link_form.channel_code,
               os_type: this.link_form.os_type,
               app_name: this.link_form.app_name,
+              pkg_name: this.link_form.pkg_name,
               link_code: this.link_form.link_code,
               download_link: this.link_form.download_link,
               click_link: this.link_form.click_link,

@@ -754,6 +754,7 @@
        */
       listAdMediaLink() {
         let ad_link_query_param = {
+          adv_link_id: this.linkId,
           channel_code: this.filter_media_code_value,
           keyword: this.search_keyword
         }
