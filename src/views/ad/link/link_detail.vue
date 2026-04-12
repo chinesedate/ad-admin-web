@@ -19,13 +19,15 @@
               <span class="adv-link-info-header-content"
                     v-if="advLinkInfo.app_name">应用名称：{{advLinkInfo.app_name}}</span>
               <span class="adv-link-info-header-content"
+                    v-if="advLinkInfo.pkg_name">应用名称：{{advLinkInfo.pkg_name}}</span>
+              <span class="adv-link-info-header-content"
                     v-if="advLinkInfo.link_code">链接标识：{{advLinkInfo.link_code}}</span>
             </div>
           </template>
           <!--显示模式-->
           <el-form v-show="advLinkFormShow" :model="advLinkInfo" label-width="100px">
             <!-- 一行显示4个表单项 -->
-            <el-row :gutter="20">
+            <el-row :gutter="20" class="adv-link-top-item-wrapper">
               <el-col :span="4">
                 <el-form-item label="渠道：">
                   <span>{{advLinkInfo.channel_name || '-'}}</span>
@@ -36,12 +38,17 @@
                   <span>{{advLinkInfo.os_type_str || '-'}}</span>
                 </el-form-item>
               </el-col>
-              <el-col :span="6">
+              <el-col :span="4">
                 <el-form-item label="应用名称：">
                   <span>{{advLinkInfo.app_name || '-'}}</span>
                 </el-form-item>
               </el-col>
-              <el-col :span="6">
+              <el-col :span="4">
+                <el-form-item label="应用包名：">
+                  <span>{{advLinkInfo.pkg_name || '-'}}</span>
+                </el-form-item>
+              </el-col>
+              <el-col :span="4">
                 <el-form-item label="链接标识：">
                   <span>{{advLinkInfo.link_code || '-'}}</span>
                 </el-form-item>
@@ -66,7 +73,7 @@
           <!--编辑模式-->
           <el-form v-show="!advLinkFormShow" ref="formRef" :model="link_form" :rules="rules" label-width="100px">
             <!-- 一行显示4个表单项 -->
-            <el-row :gutter="20">
+            <el-row :gutter="20" class="adv-link-top-item-wrapper">
               <el-col :span="4">
                 <el-form-item label="渠道：">
                   <span>{{advLinkInfo.channel_name || '-'}}</span>
@@ -77,12 +84,17 @@
                   <span>{{advLinkInfo.os_type_str || '-'}}</span>
                 </el-form-item>
               </el-col>
-              <el-col :span="6">
+              <el-col :span="4">
                 <el-form-item label="应用名称：" prop="app_name">
                   <el-input class="adv-link-item" v-model="link_form.app_name" placeholder="请输入应用名称"/>
                 </el-form-item>
               </el-col>
-              <el-col :span="6">
+              <el-col :span="4">
+                <el-form-item label="应用包名：" prop="pkg_name">
+                  <el-input class="adv-link-item" v-model="link_form.pkg_name" placeholder="请输入应用包名"/>
+                </el-form-item>
+              </el-col>
+              <el-col :span="4">
                 <el-form-item label="链接标识：" prop="link_code">
                   <el-input class="adv-link-item" v-model="link_form.link_code" placeholder="请输入链接标识"/>
                 </el-form-item>
@@ -388,6 +400,20 @@
       linkId: Number
     },
     data() {
+      // 自定义校验函数
+      const validatePkgName = (rule, value, callback) => {
+        if (this.advLinkInfo.os_type === 1) {
+          // 安卓系统时，包名为必填
+          if (!value) {
+            callback(new Error('请输入应用包名'))
+          } else {
+            callback()
+          }
+        } else {
+          // IOS系统时，包名可选
+          callback()
+        }
+      }
       return {
         // 折叠面板展开收起状态
         collapseClose: true,
@@ -420,6 +446,7 @@
           os_type: 1,
           os_type_str: '',
           app_name: '',
+          pkg_name: '',
           link_code: '',
           download_link: '',
           click_link: '',
@@ -428,6 +455,7 @@
         },
         link_form: {
           app_name: '',
+          pkg_name: '',
           link_code: '',
           download_link: '',
           click_link: '',
@@ -441,6 +469,9 @@
         rules: {
           app_name: [
             {required: true, message: '请输入应用名称', trigger: 'blur'}
+          ],
+          pkg_name: [
+            {validator: validatePkgName, trigger: 'blur'}  // 使用自定义校验
           ],
           download_link: [
             {type: 'url', message: '请输入正确的URL地址', trigger: 'blur'},
@@ -530,6 +561,7 @@
       handleAdvLinkFormEditClick() {
         // 将展示对象中的数据复制都form表单中
         this.link_form.app_name = this.advLinkInfo.app_name;
+        this.link_form.pkg_name = this.advLinkInfo.pkg_name;
         this.link_form.link_code = this.advLinkInfo.link_code;
         this.link_form.download_link = this.advLinkInfo.download_link;
         this.link_form.click_link = this.advLinkInfo.click_link;
@@ -576,6 +608,7 @@
               channel_code: this.advLinkInfo.channel_code,
               os_type: this.advLinkInfo.os_type,
               app_name: this.link_form.app_name,
+              pkg_name: this.link_form.pkg_name,
               link_code: this.link_form.link_code,
               download_link: this.link_form.download_link,
               click_link: this.link_form.click_link,
@@ -586,6 +619,7 @@
               this.$message.success('更新成功');
               // 将form表单中的数据回写到展示对象中
               this.advLinkInfo.app_name = this.link_form.app_name;
+              this.advLinkInfo.pkg_name = this.link_form.pkg_name;
               this.advLinkInfo.link_code = this.link_form.link_code;
               this.advLinkInfo.download_link = this.link_form.download_link;
               this.advLinkInfo.click_link = this.link_form.click_link;
@@ -595,7 +629,7 @@
             });
           } else {
             // 校验失败，提示用户
-            this.$message.warning('请填写完整且正确的信息');
+            // this.$message.warning('请填写完整且正确的信息');
             return false;
           }
         });
@@ -851,6 +885,10 @@
 
   .adv-link-wrapper {
     padding-top: 40px;
+
+    .adv-link-top-item-wrapper {
+      margin-bottom: 20px;
+    }
 
     .el-form-item {
       margin-right: 0;

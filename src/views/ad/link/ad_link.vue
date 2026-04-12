@@ -59,6 +59,10 @@
             label="应用名称">
           </el-table-column>
           <el-table-column
+            prop="pkg_name"
+            label="应用包名">
+          </el-table-column>
+          <el-table-column
             prop="link_code"
             label="链接标识">
           </el-table-column>
@@ -129,6 +133,9 @@
         <el-form-item label="应用名称：" prop="app_name">
           <el-input class="adv-link-item" v-model="link_form.app_name" placeholder="请输入应用名称"/>
         </el-form-item>
+        <el-form-item label="应用包名：" :required="link_form.os_type === 1" prop="pkg_name">
+          <el-input class="adv-link-item" v-model="link_form.pkg_name" placeholder="请输入应用包名"/>
+        </el-form-item>
         <el-form-item label="链接标识：" prop="link_code">
           <el-input class="adv-link-item" v-model="link_form.link_code" placeholder="请输入链接标识"/>
         </el-form-item>
@@ -167,11 +174,33 @@
 </template>
 
 <script>
-  import {saveAdChannelInfo, pageListAdLink, fetchAdChannelCodeList, addAdvLink, removeAdvLink} from "@/api/ad-data";
+  import {
+    saveAdChannelInfo,
+    pageListAdLink,
+    fetchAdChannelCodeList,
+    addAdvLink,
+    removeAdvLink
+  } from "@/api/ad-data";
 
   export default {
     name: "AdLink",
+
     data() {
+      // 自定义校验函数
+      const validatePkgName = (rule, value, callback) => {
+        if (this.link_form.os_type === 1) {
+          // 安卓系统时，包名为必填
+          if (!value) {
+            callback(new Error('请输入应用包名'))
+          } else {
+            callback()
+          }
+        } else {
+          // IOS系统时，包名可选
+          callback()
+        }
+      }
+
       return {
         // 保存滚动位置
         savedScrollTop: 0,
@@ -196,6 +225,7 @@
           channel_code: '',
           os_type: 1,
           app_name: '',
+          pkg_name: '',
           link_code: '',
           download_link: '',
           click_link: '',
@@ -212,6 +242,9 @@
           app_name: [
             {required: true, message: '请输入应用名称', trigger: 'blur'}
           ],
+          pkg_name: [
+            {validator: validatePkgName, trigger: 'blur'}  // 使用自定义校验
+          ],
           download_link: [
             {type: 'url', message: '请输入正确的URL地址', trigger: 'blur'}
           ],
@@ -226,6 +259,17 @@
     },
     components: {
       // 'viewer': Viewer
+    },
+    watch: {
+      // 监听系统类型变化，重新校验包名字段
+      'link_form.os_type'() {
+        this.$nextTick(() => {
+          if (this.$refs.formRef) {
+            // 切换系统类型时，重新校验包名字段
+            this.$refs.formRef.clearValidate('pkg_name')
+          }
+        })
+      }
     },
     methods: {
       startEdit(row) {
@@ -338,23 +382,32 @@
        * 添加广告主链接
        */
       handleAdvLinkAdd() {
-        const adv_link_info = {
-          channel_code: this.link_form.channel_code,
-          os_type: this.link_form.os_type,
-          app_name: this.link_form.app_name,
-          link_code: this.link_form.link_code,
-          download_link: this.link_form.download_link,
-          click_link: this.link_form.click_link,
-          show_link: this.link_form.show_link,
-          extra_info: this.link_form.extra_info
-        }
-        addAdvLink(adv_link_info).then(res => {
-            console.log('广告主链接添加完成:', res)
-            this.closeAdLinkAdd();
-            // 刷新广告主链接列表
-            this.listAdLink()
+        this.$refs.formRef.validate((valid) => {
+          if (valid) {
+            const adv_link_info = {
+              channel_code: this.link_form.channel_code,
+              os_type: this.link_form.os_type,
+              app_name: this.link_form.app_name,
+              link_code: this.link_form.link_code,
+              download_link: this.link_form.download_link,
+              click_link: this.link_form.click_link,
+              show_link: this.link_form.show_link,
+              extra_info: this.link_form.extra_info
+            }
+            addAdvLink(adv_link_info).then(res => {
+                console.log('广告主链接添加完成:', res)
+                this.closeAdLinkAdd();
+                // 刷新广告主链接列表
+                this.listAdLink()
+              }
+            );
+          } else {
+            // 校验失败，提示用户
+            // this.$message.warning('请填写完整且正确的信息');
+            return false;
           }
-        );
+        });
+
       },
       /**
        * 删除链接

@@ -104,15 +104,15 @@
             </template>
           </el-table-column>
           <el-table-column
-            prop="app_name"
+            prop="app_conversion_rate"
             label="回调率（渠道-应用）">
           </el-table-column>
           <el-table-column
-            prop="app_name"
+            prop="customer_conversion_rate"
             label="回调率（客户）">
           </el-table-column>
           <el-table-column
-            prop="app_name"
+            prop="active_conversion_rate"
             label="生效回调率">
           </el-table-column>
           <el-table-column
