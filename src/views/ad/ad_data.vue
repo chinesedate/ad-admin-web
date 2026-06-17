@@ -116,7 +116,7 @@
               <el-button size="mini" plain @click="handleCheckAllChange">
                 全选
               </el-button>
-              <el-button size="mini" plain @click="handleMonitorPreset">监测</el-button>
+              <el-button size="mini" plain @click="handleMonitorPreset">上报</el-button>
               <el-button size="mini" plain @click="handleCallbackPreset">回调</el-button>
             </div>
             <el-divider style="margin: 8px 0;"></el-divider>
@@ -301,7 +301,7 @@
         // 广告数据类型选择信息
         ad_type_options: [{
           value: '0',
-          label: '监测'
+          label: '上报'
         }, {
           value: '1',
           label: '回调'
@@ -309,7 +309,7 @@
         // 广告数据类型
         ad_type_value: '',
         ad_status_options: [{
-          label: '监测',
+          label: '上报',
           options: [{
             value: 1,
             label: '失败'
