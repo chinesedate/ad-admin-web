@@ -97,12 +97,12 @@
             </el-date-picker>
           </el-form-item>
           <el-form-item>
-            <el-button @click="handleTableColumnVisible" plain>
-              <span v-if="hideTableColum">
-                显示所有列
+            <el-button @click="showColumnSelector = !showColumnSelector" plain>
+              <span v-if="showColumnSelector">
+                收起列选择
               </span>
               <span v-else>
-                收起部分列
+                展开列选择
               </span>
             </el-button>
           </el-form-item>
@@ -110,6 +110,29 @@
             <el-button type="primary" @click="handleDataExport" plain>数据导出</el-button>
           </el-form-item>
         </el-form>
+        <div class="column-selector-wrapper">
+          <div v-show="showColumnSelector" class="column-selector-panel">
+            <div class="column-selector-presets">
+              <el-button size="mini" plain @click="handleCheckAllChange">
+                全选
+              </el-button>
+              <el-button size="mini" plain @click="handleMonitorPreset">监测</el-button>
+              <el-button size="mini" plain @click="handleCallbackPreset">回调</el-button>
+            </div>
+            <el-divider style="margin: 8px 0;"></el-divider>
+            <el-checkbox-group
+              v-model="visibleColumnProps"
+              @change="handleCheckedColumnsChange">
+              <el-checkbox
+                v-for="col in columnList"
+                :key="col.prop"
+                :label="col.prop"
+                style="display: inline-flex; margin-right: 16px; padding: 4px 0;">
+                {{col.label}}
+              </el-checkbox>
+            </el-checkbox-group>
+          </div>
+        </div>
         <el-table
           :data="tableData"
           ref="adDataTable"
@@ -117,49 +140,59 @@
           :row-class-name="tableRowClassName"
           style="width: 100%">
           <el-table-column
+            v-if="visibleColumnProps.includes('ad_day')"
             prop="ad_day"
             label="日期"
             width="180">
           </el-table-column>
           <el-table-column
+            v-if="visibleColumnProps.includes('ad_type')"
             prop="ad_type"
             label="数据类型">
           </el-table-column>
           <el-table-column
+            v-if="visibleColumnProps.includes('ad_status')"
             prop="ad_status"
             label="请求状态">
           </el-table-column>
           <el-table-column
+            v-if="visibleColumnProps.includes('channel_id')"
             prop="channel_id"
             label="渠道ID"
             width="180">
           </el-table-column>
           <el-table-column
+            v-if="visibleColumnProps.includes('customer_id')"
             prop="customer_id"
             label="客户ID">
           </el-table-column>
           <el-table-column
+            v-if="visibleColumnProps.includes('app_id')"
             prop="app_id"
             label="应用ID">
           </el-table-column>
           <el-table-column
+            v-if="visibleColumnProps.includes('app_name')"
             prop="app_name"
             label="应用名称">
           </el-table-column>
           <el-table-column
+            v-if="visibleColumnProps.includes('source_action_type')"
             prop="source_action_type"
             label="原始类型">
           </el-table-column>
           <el-table-column
+            v-if="visibleColumnProps.includes('action_type')"
             prop="action_type"
             label="转化类型">
           </el-table-column>
           <el-table-column
+            v-if="visibleColumnProps.includes('ad_num')"
             prop="ad_num"
             label="数量">
           </el-table-column>
           <el-table-column
-            v-if="!hideTableColum"
+            v-if="visibleColumnProps.includes('conversion_rate')"
             prop="conversion_rate"
             label="回调率">
           </el-table-column>
@@ -183,6 +216,23 @@
 <script>
   import {pageListAdData, fetchAdDataPickInfo, exportAdData} from "@/api/ad-data";
 
+  const STORAGE_KEY = 'ad_data_table_columns';
+  const CALLBACK_PRESET = ['ad_day', 'ad_status', 'app_id', 'customer_id', 'app_name', 'action_type', 'ad_num'];
+  const MONITOR_PRESET = ['ad_day', 'ad_status', 'customer_id', 'app_id', 'app_name', 'ad_num'];
+  const ALL_COLUMNS = [
+    {prop: 'ad_day', label: '日期'},
+    {prop: 'ad_type', label: '数据类型'},
+    {prop: 'ad_status', label: '请求状态'},
+    {prop: 'channel_id', label: '渠道ID'},
+    {prop: 'customer_id', label: '客户ID'},
+    {prop: 'app_id', label: '应用ID'},
+    {prop: 'app_name', label: '应用名称'},
+    {prop: 'source_action_type', label: '原始类型'},
+    {prop: 'action_type', label: '转化类型'},
+    {prop: 'ad_num', label: '数量'},
+    {prop: 'conversion_rate', label: '回调率'},
+  ];
+
   export default {
     name: "ad_data",
     data() {
@@ -192,7 +242,7 @@
         total: 0,
         hasNext: false,
         briefIntroduction: '',
-        hideTableColum: true,
+        visibleColumnProps: [],
         // 日期选择信息
         pickerOptions: {
           shortcuts: [{
@@ -290,6 +340,7 @@
         customer_id_value: [],
         app_id_options: [],
         app_id_value: [],
+        showColumnSelector: false,
       }
     },
     components: {
@@ -304,9 +355,63 @@
         }
         return row_class_name;
       },
-      handleTableColumnVisible() {
-        // 切换隐藏列
-        this.hideTableColum = !this.hideTableColum;
+      loadColumnVisibility() {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              this.visibleColumnProps = parsed;
+              return;
+            }
+          } catch (e) {/* ignore */
+          }
+        }
+        // 默认全部显示
+        this.visibleColumnProps = ALL_COLUMNS.map(col => col.prop);
+      },
+      saveColumnVisibility() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.visibleColumnProps));
+      },
+      handleCheckAllChange() {
+        const allProps = ALL_COLUMNS.map(col => col.prop);
+        const isAllSelected = this.visibleColumnProps.length === allProps.length;
+        this.visibleColumnProps = isAllSelected ? [ALL_COLUMNS[0].prop] : [...allProps];
+        this.isIndeterminate = false;
+        this.saveColumnVisibility();
+        this.$nextTick(() => {
+          this.$refs.adDataTable && this.$refs.adDataTable.doLayout();
+        });
+      },
+      handleCallbackPreset() {
+        this.visibleColumnProps = [...CALLBACK_PRESET];
+        this.checkAll = false;
+        this.isIndeterminate = true;
+        this.saveColumnVisibility();
+        this.$nextTick(() => {
+          this.$refs.adDataTable && this.$refs.adDataTable.doLayout();
+        });
+      },
+      handleMonitorPreset() {
+        this.visibleColumnProps = [...MONITOR_PRESET];
+        this.saveColumnVisibility();
+        this.$nextTick(() => {
+          this.$refs.adDataTable && this.$refs.adDataTable.doLayout();
+        });
+      },
+      handleCheckedColumnsChange(value) {
+        if (value.length === 0) {
+          this.$message.warning('至少保留一列');
+          this.loadColumnVisibility();
+          return;
+        }
+        const checkedCount = value.length;
+        this.checkAll = checkedCount === ALL_COLUMNS.length;
+        this.isIndeterminate = checkedCount > 0 && checkedCount < ALL_COLUMNS.length;
+        this.saveColumnVisibility();
+        this.$nextTick(() => {
+          this.$refs.adDataTable && this.$refs.adDataTable.doLayout();
+        });
       },
       handlePageChange() {
         console.log('1121')
@@ -476,9 +581,13 @@
     computed: {
       canSubmit() {
         return this.briefIntroduction === '';
+      },
+      columnList() {
+        return ALL_COLUMNS;
       }
     },
     created() {
+      this.loadColumnVisibility();
       this.listAdDataPickInfo();
       this.listAdData();
     }
@@ -565,5 +674,25 @@
 
   ::v-deep .el-table .warning-row td {
     background-color: oldlace !important;
+  }
+
+  .column-selector-wrapper {
+    padding: 0 10px;
+    margin-bottom: 10px;
+  }
+
+  .column-selector-presets {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .column-selector-panel {
+    margin-top: 8px;
+    padding: 12px 16px;
+    border: 1px solid #EBEEF5;
+    border-radius: 4px;
+    background: #fff;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, .1);
   }
 </style>
