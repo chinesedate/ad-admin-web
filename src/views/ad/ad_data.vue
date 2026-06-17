@@ -301,7 +301,7 @@
         // 广告数据类型选择信息
         ad_type_options: [{
           value: '0',
-          label: '点击 | 曝光'
+          label: '监测'
         }, {
           value: '1',
           label: '回调'
@@ -309,7 +309,7 @@
         // 广告数据类型
         ad_type_value: '',
         ad_status_options: [{
-          label: '点击 | 曝光',
+          label: '监测',
           options: [{
             value: 1,
             label: '失败'
