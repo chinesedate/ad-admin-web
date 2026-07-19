@@ -96,6 +96,21 @@
               :clearable="false">
             </el-date-picker>
           </el-form-item>
+          <el-form-item class="pick-form-item" label="时间">
+            <el-select
+              v-model="time_type"
+              filterable
+              @change="handleAdDataPickChange"
+              collapse-tags
+              placeholder="请选择">
+              <el-option
+                v-for="item in time_options"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value">
+              </el-option>
+            </el-select>
+          </el-form-item>
           <el-form-item>
             <el-button @click="showColumnSelector = !showColumnSelector" plain>
               <span v-if="showColumnSelector">
@@ -143,6 +158,12 @@
             v-if="visibleColumnProps.includes('ad_day')"
             prop="ad_day"
             label="日期"
+            width="180">
+          </el-table-column>
+          <el-table-column
+            v-if="visibleColumnProps.includes('ad_hour')"
+            prop="ad_hour"
+            label="时间"
             width="180">
           </el-table-column>
           <el-table-column
@@ -217,10 +238,11 @@
   import {pageListAdData, fetchAdDataPickInfo, exportAdData} from "@/api/ad-data";
 
   const STORAGE_KEY = 'ad_data_table_columns';
-  const CALLBACK_PRESET = ['ad_day', 'ad_status', 'app_id', 'customer_id', 'app_name', 'action_type', 'ad_num'];
-  const MONITOR_PRESET = ['ad_day', 'ad_status', 'customer_id', 'app_id', 'app_name', 'ad_num'];
+  const CALLBACK_PRESET = ['ad_day', 'ad_hour', 'ad_status', 'app_id', 'customer_id', 'app_name', 'action_type', 'ad_num'];
+  const MONITOR_PRESET = ['ad_day', 'ad_hour', 'ad_status', 'customer_id', 'app_id', 'app_name', 'ad_num'];
   const ALL_COLUMNS = [
     {prop: 'ad_day', label: '日期'},
+    {prop: 'ad_hour', label: '时间'},
     {prop: 'ad_type', label: '数据类型'},
     {prop: 'ad_status', label: '请求状态'},
     {prop: 'channel_id', label: '渠道ID'},
@@ -340,6 +362,8 @@
         customer_id_value: [],
         app_id_options: [],
         app_id_value: [],
+        time_type: -2,
+        time_options: [{value: -2, label: '全天'}, {value: -1, label: '分小时'}],
         showColumnSelector: false,
       }
     },
@@ -506,7 +530,8 @@
           channel_id_list: this.channel_id_value,
           customer_id_list: this.customer_id_value,
           app_id_list: this.app_id_value,
-          ad_status_list: this.ad_status_value
+          ad_status_list: this.ad_status_value,
+          time_type: this.time_type
         }
         if (this.ad_type_value !== '') {
           ad_data_query_param.ad_type = this.ad_type_value
@@ -563,7 +588,8 @@
           end_date_time: end_date,
           channel_id_list: this.channel_id_value,
           customer_id_list: this.customer_id_value,
-          app_id_list: this.app_id_value
+          app_id_list: this.app_id_value,
+          time_type: this.time_type
         }
         if (this.ad_type_value !== '') {
           ad_data_query_param.ad_type = this.ad_type_value
