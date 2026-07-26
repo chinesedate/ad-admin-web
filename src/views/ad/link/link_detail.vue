@@ -234,7 +234,7 @@
           </el-table-column>
           <el-table-column
             prop="conversion_rate_label"
-            label="回调率">
+            label="回调信息">
           </el-table-column>
           <el-table-column
             prop="create_time"
@@ -304,17 +304,46 @@
           </el-select>
         </el-form-item>
         <el-form-item label="回调率：" prop="conversion_rate">
-          <el-select
-            v-model="media_link_form.conversion_rate"
-            filterable
-            placeholder="请选择">
-            <el-option
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <el-input-number
+              v-model="media_link_form.conversion_rate"
+              :min="0"
+              :max="100"
+              :precision="0"
+              style="width: 180px"
+            />
+            <span style="color: #909399;">%</span>
+
+            <!-- 使用 tag 作为快捷按钮 -->
+            <el-tag
               v-for="item in media_conversion_rate_list"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value">
-            </el-option>
-          </el-select>
+              :key="item"
+              size="small"
+              type="primary"
+              style="cursor: pointer;"
+              @click="media_link_form.conversion_rate = item"
+            >
+              {{item}}%
+            </el-tag>
+          </div>
+        </el-form-item>
+        <el-form-item label="保底回调" prop="rate_min_limit">
+          <el-radio-group v-model="media_link_form.rate_min_limit">
+            <el-radio :label="false">关闭</el-radio>
+            <el-radio :label="true">开启</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <!-- 回调数量输入框：当保底回调开启时显示 -->
+        <el-form-item
+          v-if="media_link_form.rate_min_limit === true"
+          label="保底回调数量"
+          prop="rate_min_limit_num">
+          <el-input-number
+            v-model="media_link_form.rate_min_limit_num"
+            :min="1"
+            :max="10"
+            placeholder="请输入保底回调数量"
+          />
         </el-form-item>
         <el-form-item label="备注信息：" prop="extra_info">
           <el-input
@@ -350,17 +379,46 @@
         label-width="100px"
       >
         <el-form-item label="回调率：" prop="conversion_rate">
-          <el-select
-            v-model="media_link_modify_form.conversion_rate"
-            filterable
-            placeholder="请选择">
-            <el-option
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <el-input-number
+              v-model="media_link_modify_form.conversion_rate"
+              :min="0"
+              :max="100"
+              :precision="0"
+              style="width: 180px"
+            />
+            <span style="color: #909399;">%</span>
+
+            <!-- 使用 tag 作为快捷按钮 -->
+            <el-tag
               v-for="item in media_conversion_rate_list"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value">
-            </el-option>
-          </el-select>
+              :key="item"
+              size="small"
+              type="primary"
+              style="cursor: pointer;"
+              @click="media_link_modify_form.conversion_rate = item"
+            >
+              {{item}}%
+            </el-tag>
+          </div>
+        </el-form-item>
+        <el-form-item label="保底回调"  prop="rate_min_limit">
+          <el-radio-group v-model="media_link_modify_form.rate_min_limit">
+            <el-radio :label="false">关闭</el-radio>
+            <el-radio :label="true">开启</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <!-- 回调数量输入框：当保底回调开启时显示 -->
+        <el-form-item
+          v-if="media_link_modify_form.rate_min_limit === true"
+          label="保底回调数量"
+          prop="rate_min_limit_num">
+          <el-input-number
+            v-model="media_link_modify_form.rate_min_limit_num"
+            :min="1"
+            :max="10"
+            placeholder="请输入保底回调数量"
+          />
         </el-form-item>
         <el-form-item label="备注信息：" prop="extra_info">
           <el-input
@@ -485,7 +543,9 @@
         },
         media_link_form: {
           channel_code: '',
-          conversion_rate: 10,
+          conversion_rate: 80,
+          rate_min_limit: false,
+          rate_min_limit_num: 10,
           extra_info: ''
         },
         media_rules: {
@@ -498,18 +558,17 @@
         },
         media_link_modify_form: {
           id: '',
-          conversion_rate: 10,
+          conversion_rate: 80,
+          rate_min_limit: false,
+          rate_min_limit_num: 10,
           extra_info: ''
         },
         media_modify_rules: {
-          conversion_rate: [{required: true}]
+          conversion_rate: [{required: true}],
+          rate_min_limit: [{required: true}]
         },
         // 媒体渠道标识列表
-        media_conversion_rate_list: [
-          {value: 10, label: '100%'}, {value: 9, label: '90%'}, {value: 8, label: '80%'},
-          {value: 7, label: '70%'}, {value: 6, label: '60%'}, {value: 5, label: '50%'},
-          {value: 4, label: '40%'}, {value: 3, label: '30%'}, {value: 2, label: '20%'},
-          {value: 1, label: '10%'}],
+        media_conversion_rate_list: [40, 50, 60, 70, 80],
         // 复制按钮loading
         copyAllLoading: false,
       }
@@ -540,6 +599,8 @@
         this.media_link_modify_form = {
           id: row.id,
           conversion_rate: row.conversion_rate,
+          rate_min_limit: row.rate_min_limit,
+          rate_min_limit_num: row.rate_min_limit_num,
           extra_info: row.extra_info
         }
         this.modifyDialogVisible = true;
@@ -642,6 +703,8 @@
           adv_link_id: this.linkId,
           channel_code: this.media_link_form.channel_code,
           conversion_rate: this.media_link_form.conversion_rate,
+          rate_min_limit: this.media_link_form.rate_min_limit,
+          rate_min_limit_num: this.media_link_form.rate_min_limit_num,
           extra_info: this.media_link_form.extra_info
         }
         addMediaLink(adv_link_info).then(res => {
@@ -658,6 +721,8 @@
         const media_link_info = {
           id: this.media_link_modify_form.id,
           conversion_rate: this.media_link_modify_form.conversion_rate,
+          rate_min_limit: this.media_link_modify_form.rate_min_limit,
+          rate_min_limit_num: this.media_link_modify_form.rate_min_limit_num,
           extra_info: this.media_link_modify_form.extra_info
         }
         updateMediaLink(media_link_info).then(res => {
@@ -666,7 +731,13 @@
             if (index !== -1) {
               const newRow = JSON.parse(JSON.stringify(this.tableData[index]))
               newRow.conversion_rate = this.media_link_modify_form.conversion_rate
-              newRow.conversion_rate_label = this.media_link_modify_form.conversion_rate * 10 + '%'
+              newRow.rate_min_limit = this.media_link_modify_form.rate_min_limit
+              newRow.rate_min_limit_num = this.media_link_modify_form.rate_min_limit_num
+              if (this.media_link_modify_form.rate_min_limit) {
+                newRow.conversion_rate_label = this.media_link_modify_form.conversion_rate + '% 开启 ' + this.media_link_modify_form.rate_min_limit_num
+              } else {
+                newRow.conversion_rate_label = this.media_link_modify_form.conversion_rate + '% 关闭 '
+              }
               newRow.extra_info = this.media_link_modify_form.extra_info
               this.$set(this.tableData, index, newRow)
             }
@@ -768,7 +839,13 @@
               this.tableData = res.data.data.list;
               for (const media_link of this.tableData) {
                 const conversion_rate = media_link.conversion_rate;
-                media_link.conversion_rate_label = conversion_rate * 10 + '%'
+                const rate_min_limit = media_link.rate_min_limit;
+                const rate_min_limit_num = media_link.rate_min_limit_num;
+                if (rate_min_limit) {
+                  media_link.conversion_rate_label = conversion_rate + '% 开启 ' + rate_min_limit_num
+                } else {
+                  media_link.conversion_rate_label = conversion_rate + '% 关闭 '
+                }
               }
               this.total = res.data.data.total;
               this.hasNext = res.data.data.hasNext;

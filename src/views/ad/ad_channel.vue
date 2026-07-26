@@ -90,45 +90,51 @@
           <el-table-column
             prop="app_name"
             label="应用名称">
-            <template #default="scope">
-              <el-input
-                class="app-name-input"
-                size="mini"
-                maxlength="50"
-                v-if="scope.row.editing"
-                v-model="scope.row.app_name"
-                @blur="saveEdit(scope.row)"
-                placeholder="请输入应用名称"
-              ></el-input>
-              <span v-else>{{scope.row.app_name}}</span>
-            </template>
+            <!--                        <template #default="scope">-->
+            <!--                          <el-input-->
+            <!--                            class="app-name-input"-->
+            <!--                            size="mini"-->
+            <!--                            maxlength="50"-->
+            <!--                            v-if="scope.row.editing"-->
+            <!--                            v-model="scope.row.app_name"-->
+            <!--                            @blur="saveEdit(scope.row)"-->
+            <!--                            placeholder="请输入应用名称"-->
+            <!--                          ></el-input>-->
+            <!--                          <span v-else>{{scope.row.app_name}}</span>-->
+            <!--                        </template>-->
           </el-table-column>
           <el-table-column
             prop="app_conversion_rate"
-            label="回调率（渠道-应用）">
+            label="回调信息（渠道-应用）">
           </el-table-column>
           <el-table-column
             prop="customer_conversion_rate"
-            label="回调率（客户）">
+            label="回调信息（客户）">
           </el-table-column>
           <el-table-column
             prop="active_conversion_rate"
-            label="生效回调率">
+            label="生效回调信息">
           </el-table-column>
           <el-table-column
             label="操作">
             <template #default="scope">
               <el-button
-                v-if="!scope.row.editing"
                 type="primary"
                 size="mini"
-                @click="startEdit(scope.row)"
+                @click="activeChannelAppModify(scope.row)"
               >编辑
               </el-button>
-              <span v-else>
-                <el-button size="mini" @click="cancelEdit(scope.row)" plain>取消</el-button>
-                <el-button type="success" size="mini" @click="saveEdit(scope.row)">保存</el-button>
-              </span>
+              <!--              <el-button-->
+              <!--                v-if="!scope.row.editing"-->
+              <!--                type="primary"-->
+              <!--                size="mini"-->
+              <!--                @click="activeMediaLinkModify(scope.row)"-->
+              <!--              >编辑-->
+              <!--              </el-button>-->
+              <!--              <span v-else>-->
+              <!--                <el-button size="mini" @click="cancelEdit(scope.row)" plain>取消</el-button>-->
+              <!--                <el-button type="success" size="mini" @click="saveEdit(scope.row)">保存</el-button>-->
+              <!--              </span>-->
             </template>
           </el-table-column>
         </el-table>
@@ -145,11 +151,85 @@
         </div>
       </div>
     </div>
+    <!-- 编辑渠道信息弹框 -->
+    <el-dialog
+      title="渠道信息"
+      :visible.sync="modifyDialogVisible"
+      width="800px"
+      :close-on-click-modal="false"
+      @close="closeChannelAppModify"
+    >
+      <el-form
+        ref="appFormModifyRef"
+        :model="channel_app_modify_form"
+        :rules="media_modify_rules"
+        label-width="100px"
+      >
+        <el-form-item label="应用名称：" prop="app_name">
+          <el-input
+            class="app-name-input"
+            size="medium"
+            maxlength="50"
+            v-model="channel_app_modify_form.app_name"
+            placeholder="请输入应用名称"
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="回调率：" prop="conversion_rate">
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <el-input-number
+              v-model="channel_app_modify_form.conversion_rate"
+              :min="0"
+              :max="100"
+              :precision="0"
+              style="width: 180px"
+            />
+            <span style="color: #909399;">%</span>
+            <!-- 使用 tag 作为快捷按钮 -->
+            <el-tag
+              v-for="item in media_conversion_rate_list"
+              :key="item"
+              size="small"
+              type="primary"
+              style="cursor: pointer;"
+              @click="channel_app_modify_form.conversion_rate = item"
+            >
+              {{item}}%
+            </el-tag>
+          </div>
+        </el-form-item>
+        <el-form-item label="保底回调" prop="rate_min_limit">
+          <el-radio-group v-model="channel_app_modify_form.rate_min_limit">
+            <el-radio :label="false">关闭</el-radio>
+            <el-radio :label="true">开启</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <!-- 回调数量输入框：当保底回调开启时显示 -->
+        <el-form-item
+          v-if="channel_app_modify_form.rate_min_limit === true"
+          label="保底回调数量"
+          prop="rate_min_limit_num">
+          <el-input-number
+            v-model="channel_app_modify_form.rate_min_limit_num"
+            :min="1"
+            :max="10"
+            placeholder="请输入保底回调数量"
+          />
+        </el-form-item>
+
+      </el-form>
+
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="modifyDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="submitLoading" @click="handleMediaLinkModify">
+          确定
+        </el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-  import {pageListAdChannel, fetchAdChannelPickInfo, saveAdChannelInfo} from "@/api/ad-data";
+  import {pageListAdChannel, fetchAdChannelPickInfo, saveAdChannelInfo, updateMediaLink} from "@/api/ad-data";
 
   export default {
     name: "ad_data",
@@ -223,6 +303,25 @@
         customer_id_value: [],
         app_id_options: [],
         app_id_value: [],
+        /**
+         * 编辑链接弹框显示状态
+         */
+        modifyDialogVisible: false,
+        submitLoading: false,
+        channel_app_modify_form: {
+          channel_id: '',
+          customer_id: '',
+          app_id: '',
+          app_name: '',
+          conversion_rate: 80,
+          rate_min_limit: false,
+          rate_min_limit_num: 10,
+          extra_info: ''
+        },
+        media_modify_rules: {
+          conversion_rate: [{required: true}],
+          rate_min_limit: [{required: true}]
+        },
         // currentEditField: ''
       }
     },
@@ -267,6 +366,65 @@
           }
         ).then(res => {
             console.log('广告渠道信息更新完成:', res)
+          }
+        );
+      },
+      /**
+       * 触发媒体链接编辑弹框
+       */
+      activeChannelAppModify(row) {
+        this.channel_app_modify_form = {
+          channel_id: row.channel_id,
+          customer_id: row.customer_id,
+          app_id: row.app_id,
+          app_name: row.app_name,
+          conversion_rate: row.conversion_rate ? row.conversion_rate : 80,
+          rate_min_limit: !!row.rate_min_limit,
+          rate_min_limit_num: row.rate_min_limit_num ? row.rate_min_limit_num : 10
+        }
+        this.modifyDialogVisible = true;
+      },
+      closeChannelAppModify() {
+        this.modifyDialogVisible = false;
+        // 关闭时重置表单
+        this.$refs.mediaFormModifyRef.resetFields()
+      },
+      /**
+       * 编辑媒体链接
+       */
+      handleMediaLinkModify() {
+        const media_link_info = {
+          channel_id: this.media_link_modify_form.channel_id,
+          customer_id: this.media_link_modify_form.customer_id,
+          app_id: this.media_link_modify_form.app_id,
+          app_name: this.media_link_modify_form.app_name,
+          conversion_rate: this.media_link_modify_form.conversion_rate,
+          rate_min_limit: this.media_link_modify_form.rate_min_limit,
+          rate_min_limit_num: this.media_link_modify_form.rate_min_limit_num,
+          extra_info: this.media_link_modify_form.extra_info
+        }
+        saveAdChannelInfo(media_link_info
+        ).then(res => {
+            console.log('广告渠道信息更新完成:', res)
+          }
+        );
+        updateMediaLink(media_link_info).then(res => {
+            console.log('媒体链接信息更新完成:', res)
+            const index = this.tableData.findIndex(item => item.id === this.media_link_modify_form.id)
+            if (index !== -1) {
+              const newRow = JSON.parse(JSON.stringify(this.tableData[index]))
+              newRow.conversion_rate = this.media_link_modify_form.conversion_rate
+              newRow.rate_min_limit = this.media_link_modify_form.rate_min_limit
+              newRow.rate_min_limit_num = this.media_link_modify_form.rate_min_limit_num
+              if (this.media_link_modify_form.rate_min_limit) {
+                newRow.conversion_rate_label = this.media_link_modify_form.conversion_rate + '% 开启 ' + this.media_link_modify_form.rate_min_limit_num
+              } else {
+                newRow.conversion_rate_label = this.media_link_modify_form.conversion_rate + '% 关闭 '
+              }
+              newRow.extra_info = this.media_link_modify_form.extra_info
+              this.$set(this.tableData, index, newRow)
+            }
+            this.closeChannelAppModify();
           }
         );
       },
