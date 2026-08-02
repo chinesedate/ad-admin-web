@@ -567,7 +567,7 @@
           conversion_rate: [{required: true}],
           rate_min_limit: [{required: true}]
         },
-        // 媒体渠道标识列表
+        // // 渠道-应用回调率
         media_conversion_rate_list: [40, 50, 60, 70, 80],
         // 复制按钮loading
         copyAllLoading: false,

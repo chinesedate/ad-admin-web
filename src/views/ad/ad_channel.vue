@@ -104,15 +104,15 @@
             <!--                        </template>-->
           </el-table-column>
           <el-table-column
-            prop="app_conversion_rate"
+            prop="app_conversion_rate_label"
             label="回调信息（渠道-应用）">
           </el-table-column>
           <el-table-column
-            prop="customer_conversion_rate"
+            prop="customer_conversion_rate_label"
             label="回调信息（客户）">
           </el-table-column>
           <el-table-column
-            prop="active_conversion_rate"
+            prop="active_conversion_rate_label"
             label="生效回调信息">
           </el-table-column>
           <el-table-column
@@ -220,7 +220,7 @@
 
       <span slot="footer" class="dialog-footer">
         <el-button @click="modifyDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="submitLoading" @click="handleMediaLinkModify">
+        <el-button type="primary" :loading="submitLoading" @click="handleChannelAppModify">
           确定
         </el-button>
       </span>
@@ -229,7 +229,7 @@
 </template>
 
 <script>
-  import {pageListAdChannel, fetchAdChannelPickInfo, saveAdChannelInfo, updateMediaLink} from "@/api/ad-data";
+  import {fetchAdChannelPickInfo, pageListAdChannel, saveAdChannelInfo} from "@/api/ad-data";
 
   export default {
     name: "ad_data",
@@ -322,6 +322,8 @@
           conversion_rate: [{required: true}],
           rate_min_limit: [{required: true}]
         },
+        // 渠道-客户-应用回调率
+        media_conversion_rate_list: [40, 50, 60, 70, 80],
         // currentEditField: ''
       }
     },
@@ -329,46 +331,46 @@
       // 'viewer': Viewer
     },
     methods: {
-      startEdit(row) {
-        // 重置所有行的编辑状态
-        this.tableData.forEach(item => {
-          item.editing = false
-        })
-        const index = this.tableData.findIndex(item => item.key_id === row.key_id)
-        if (index !== -1) {
-          const newRow = JSON.parse(JSON.stringify(this.tableData[index]))
-          newRow.editing = true
-          this.$set(this.tableData, index, newRow)
-        }
-        // this.currentEditField = ''
-        console.log(this.tableData)
-      },
-      cancelEdit(row) {
-        // 将当前行设置为不编辑状态
-        const index = this.tableData.findIndex(item => item.key_id === row.key_id)
-        if (index !== -1) {
-          const newRow = JSON.parse(JSON.stringify(this.tableData[index]))
-          newRow.editing = false
-          this.$set(this.tableData, index, newRow)
-        }
-      },
+      // startEdit(row) {
+      //   // 重置所有行的编辑状态
+      //   this.tableData.forEach(item => {
+      //     item.editing = false
+      //   })
+      //   const index = this.tableData.findIndex(item => item.key_id === row.key_id)
+      //   if (index !== -1) {
+      //     const newRow = JSON.parse(JSON.stringify(this.tableData[index]))
+      //     newRow.editing = true
+      //     this.$set(this.tableData, index, newRow)
+      //   }
+      //   // this.currentEditField = ''
+      //   console.log(this.tableData)
+      // },
+      // cancelEdit(row) {
+      //   // 将当前行设置为不编辑状态
+      //   const index = this.tableData.findIndex(item => item.key_id === row.key_id)
+      //   if (index !== -1) {
+      //     const newRow = JSON.parse(JSON.stringify(this.tableData[index]))
+      //     newRow.editing = false
+      //     this.$set(this.tableData, index, newRow)
+      //   }
+      // },
       handleCellClick(row, column) {
         if (row.editing) {
           this.currentEditField = column.property
         }
       },
-      saveEdit(row) {
-        row.editing = false
-        // this.currentEditField = ''
-        // 这里可以添加数据保存逻辑
-        saveAdChannelInfo({
-            channel_id: row.channel_id, customer_id: row.customer_id, app_id: row.app_id, app_name: row.app_name
-          }
-        ).then(res => {
-            console.log('广告渠道信息更新完成:', res)
-          }
-        );
-      },
+      // saveEdit(row) {
+      //   row.editing = false
+      //   // this.currentEditField = ''
+      //   // 这里可以添加数据保存逻辑
+      //   saveAdChannelInfo({
+      //       channel_id: row.channel_id, customer_id: row.customer_id, app_id: row.app_id, app_name: row.app_name
+      //     }
+      //   ).then(res => {
+      //       console.log('广告渠道信息更新完成:', res)
+      //     }
+      //   );
+      // },
       /**
        * 触发媒体链接编辑弹框
        */
@@ -378,50 +380,60 @@
           customer_id: row.customer_id,
           app_id: row.app_id,
           app_name: row.app_name,
-          conversion_rate: row.conversion_rate ? row.conversion_rate : 80,
-          rate_min_limit: !!row.rate_min_limit,
-          rate_min_limit_num: row.rate_min_limit_num ? row.rate_min_limit_num : 10
+          conversion_rate: row.customer_conversion_rate ? row.customer_conversion_rate : 80,
+          rate_min_limit: !!row.customer_rate_min_limit,
+          rate_min_limit_num: row.customer_rate_min_limit_num ? row.customer_rate_min_limit_num : 10
         }
         this.modifyDialogVisible = true;
       },
       closeChannelAppModify() {
         this.modifyDialogVisible = false;
         // 关闭时重置表单
-        this.$refs.mediaFormModifyRef.resetFields()
+        this.$refs.appFormModifyRef.resetFields()
       },
       /**
        * 编辑媒体链接
        */
-      handleMediaLinkModify() {
-        const media_link_info = {
-          channel_id: this.media_link_modify_form.channel_id,
-          customer_id: this.media_link_modify_form.customer_id,
-          app_id: this.media_link_modify_form.app_id,
-          app_name: this.media_link_modify_form.app_name,
-          conversion_rate: this.media_link_modify_form.conversion_rate,
-          rate_min_limit: this.media_link_modify_form.rate_min_limit,
-          rate_min_limit_num: this.media_link_modify_form.rate_min_limit_num,
-          extra_info: this.media_link_modify_form.extra_info
+      handleChannelAppModify() {
+        const channel_app_info = {
+          channel_id: this.channel_app_modify_form.channel_id,
+          customer_id: this.channel_app_modify_form.customer_id,
+          app_id: this.channel_app_modify_form.app_id,
+          app_name: this.channel_app_modify_form.app_name,
+          conversion_rate: this.channel_app_modify_form.conversion_rate,
+          rate_min_limit: this.channel_app_modify_form.rate_min_limit,
+          rate_min_limit_num: this.channel_app_modify_form.rate_min_limit_num
         }
-        saveAdChannelInfo(media_link_info
+        saveAdChannelInfo(channel_app_info
         ).then(res => {
             console.log('广告渠道信息更新完成:', res)
-          }
-        );
-        updateMediaLink(media_link_info).then(res => {
-            console.log('媒体链接信息更新完成:', res)
-            const index = this.tableData.findIndex(item => item.id === this.media_link_modify_form.id)
+            const index = this.tableData.findIndex(item => (item.channel_id === this.channel_app_modify_form.channel_id
+              && item.customer_id === this.channel_app_modify_form.customer_id
+              && item.app_id === this.channel_app_modify_form.app_id))
             if (index !== -1) {
               const newRow = JSON.parse(JSON.stringify(this.tableData[index]))
-              newRow.conversion_rate = this.media_link_modify_form.conversion_rate
-              newRow.rate_min_limit = this.media_link_modify_form.rate_min_limit
-              newRow.rate_min_limit_num = this.media_link_modify_form.rate_min_limit_num
-              if (this.media_link_modify_form.rate_min_limit) {
-                newRow.conversion_rate_label = this.media_link_modify_form.conversion_rate + '% 开启 ' + this.media_link_modify_form.rate_min_limit_num
-              } else {
-                newRow.conversion_rate_label = this.media_link_modify_form.conversion_rate + '% 关闭 '
+              newRow.customer_conversion_rate = this.channel_app_modify_form.conversion_rate
+              newRow.customer_rate_min_limit = this.channel_app_modify_form.rate_min_limit
+              newRow.customer_rate_min_limit_num = this.channel_app_modify_form.rate_min_limit_num
+              if (newRow.app_conversion_rate) {
+                if (newRow.app_rate_min_limit) {
+                  newRow.app_conversion_rate_label = newRow.app_conversion_rate + '% 开启 ' + newRow.app_rate_min_limit_num
+                } else {
+                  newRow.app_conversion_rate_label = newRow.app_conversion_rate + '% 关闭 '
+                }
               }
-              newRow.extra_info = this.media_link_modify_form.extra_info
+              if (newRow.customer_conversion_rate) {
+                if (newRow.customer_rate_min_limit) {
+                  newRow.customer_conversion_rate_label = newRow.customer_conversion_rate + '% 开启 ' + newRow.customer_rate_min_limit_num
+                } else {
+                  newRow.customer_conversion_rate_label = newRow.customer_conversion_rate + '% 关闭 '
+                }
+              }
+              if (newRow.customer_conversion_rate_label) {
+                newRow.active_conversion_rate_label = newRow.customer_conversion_rate_label
+              } else if (newRow.app_conversion_rate_label) {
+                newRow.active_conversion_rate_label = newRow.app_conversion_rate_label
+              }
               this.$set(this.tableData, index, newRow)
             }
             this.closeChannelAppModify();
@@ -530,9 +542,28 @@
             if (res.data.data != null) {
               this.tableData = res.data.data.list;
               for (let rowData of this.tableData) {
-                // 设置行初始编辑状态为false
-                rowData.editing = false;
+                // // 设置行初始编辑状态为false
+                // rowData.editing = false;
                 rowData.key_id = rowData.channel_id + "_" + rowData.customer_id + "_" + rowData.app_id;
+                if (rowData.app_conversion_rate) {
+                  if (rowData.app_rate_min_limit) {
+                    rowData.app_conversion_rate_label = rowData.app_conversion_rate + '% 开启 ' + rowData.app_rate_min_limit_num
+                  } else {
+                    rowData.app_conversion_rate_label = rowData.app_conversion_rate + '% 关闭 '
+                  }
+                }
+                if (rowData.customer_conversion_rate) {
+                  if (rowData.customer_rate_min_limit) {
+                    rowData.customer_conversion_rate_label = rowData.customer_conversion_rate + '% 开启 ' + rowData.customer_rate_min_limit_num
+                  } else {
+                    rowData.customer_conversion_rate_label = rowData.customer_conversion_rate + '% 关闭 '
+                  }
+                }
+                if (rowData.customer_conversion_rate_label) {
+                  rowData.active_conversion_rate_label = rowData.customer_conversion_rate_label
+                } else if (rowData.app_conversion_rate_label) {
+                  rowData.active_conversion_rate_label = rowData.app_conversion_rate_label
+                }
               }
               this.total = res.data.data.total;
               this.hasNext = res.data.data.hasNext;
