@@ -50,7 +50,7 @@
 </script>
 
 <style lang="scss" scoped>
-  .content-tab /deep/ .el-tabs__nav-scroll {
+  .content-tab ::v-deep .el-tabs__nav-scroll {
     display: flex;
     justify-content: center;
   }

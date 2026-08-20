@@ -168,3 +168,34 @@ export function removeMediaLink(id) {
     method: 'delete'
   });
 }
+
+export function pageListAdvMedia(data) {
+  return request({
+    url: '/track/admin/adv-media-list',
+    method: 'post',
+    data
+  })
+}
+
+export function addAdvMedia(data) {
+  return request({
+    url: '/track/admin/adv-media',
+    method: 'post',
+    data
+  })
+}
+
+export function updateAdvMedia(data) {
+  return request({
+    url: '/track/admin/adv-media',
+    method: 'put',
+    data
+  })
+}
+
+export function removeAdvMedia(id) {
+  return request({
+    url: `/track/admin/adv-media/${id}`,
+    method: 'delete'
+  })
+}

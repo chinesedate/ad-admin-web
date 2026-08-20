@@ -2,9 +2,14 @@
   "name": "admin-web",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=14 <=20"
+  },
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
+    "preserve": "node scripts/check-node-version.js",
+    "prebuild": "node scripts/check-node-version.js",
+    "serve": "NODE_OPTIONS=--openssl-legacy-provider vue-cli-service serve",
+    "build": "NODE_OPTIONS=--openssl-legacy-provider vue-cli-service build",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
@@ -32,7 +37,7 @@
     "babel-eslint": "^10.1.0",
     "eslint": "^6.7.2",
     "eslint-plugin-vue": "^6.2.2",
-    "node-sass": "^4.14.1",
+    "sass": "^1.32.13",
     "sass-loader": "^8.0.2",
     "vue-svg-loader": "^0.17.0-beta.2",
     "vue-template-compiler": "^2.6.11"

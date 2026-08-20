@@ -61,6 +61,20 @@ const routes = [
     }
   },
   {
+    path: '/adv_media_list',
+    component: Layout,
+    children: [
+      {
+        path: '',
+        name: 'AdvMediaList',
+        component: () => import('@/views/ad/adv_media_list.vue')
+      }
+    ],
+    props: {
+      menuIndex: 'adv-media-list'
+    }
+  },
+  {
     path: '/ad_link',
     component: Layout,
     children: [

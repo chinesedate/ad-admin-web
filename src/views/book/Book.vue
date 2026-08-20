@@ -379,7 +379,7 @@
     /*}*/
 
 
-    .book /deep/ .el-tree--highlight-current .el-tree-node.is-current > .el-tree-node__content {
+    .book ::v-deep .el-tree--highlight-current .el-tree-node.is-current > .el-tree-node__content {
         background-color: #191E1E
     }
 

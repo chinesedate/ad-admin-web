@@ -423,7 +423,7 @@ export default {
 
 }
 
-.dialog-tool-link-input /deep/ .el-input {
+.dialog-tool-link-input ::v-deep .el-input {
   width: 70%;
 }
 

@@ -419,7 +419,7 @@ export default {
   content: "";
 }
 
-.tool-dialog /deep/ .el-dialog__body {
+.tool-dialog ::v-deep .el-dialog__body {
   padding-top: 10px;
 }
 
