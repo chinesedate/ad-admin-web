@@ -199,3 +199,65 @@ export function removeAdvMedia(id) {
     method: 'delete'
   })
 }
+
+export function pageListAdvChannelUpDown(data) {
+  return request({
+    url: '/track/admin/adv-channel-up-down-list',
+    method: 'post',
+    data
+  })
+}
+
+export function addAdvChannelUpDown(data) {
+  return request({
+    url: '/track/admin/adv-channel-up-down',
+    method: 'post',
+    data
+  })
+}
+
+export function updateAdvChannelUpDown(data) {
+  return request({
+    url: '/track/admin/adv-channel-up-down',
+    method: 'put',
+    data
+  })
+}
+
+export function removeAdvChannelUpDown(id) {
+  return request({
+    url: `/track/admin/adv-channel-up-down/${id}`,
+    method: 'delete'
+  })
+}
+
+export function pageListAdvChannelAction(data) {
+  return request({
+    url: '/track/admin/adv-channel-action-list',
+    method: 'post',
+    data
+  })
+}
+
+export function addAdvChannelAction(data) {
+  return request({
+    url: '/track/admin/adv-channel-action',
+    method: 'post',
+    data
+  })
+}
+
+export function updateAdvChannelAction(data) {
+  return request({
+    url: '/track/admin/adv-channel-action',
+    method: 'put',
+    data
+  })
+}
+
+export function removeAdvChannelAction(id) {
+  return request({
+    url: `/track/admin/adv-channel-action/${id}`,
+    method: 'delete'
+  })
+}
