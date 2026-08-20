@@ -75,6 +75,34 @@ const routes = [
     }
   },
   {
+    path: '/adv_channel_up_down_list',
+    component: Layout,
+    children: [
+      {
+        path: '',
+        name: 'AdvChannelUpDownList',
+        component: () => import('@/views/ad/adv_channel_up_down_list.vue')
+      }
+    ],
+    props: {
+      menuIndex: 'adv-channel-up-down-list'
+    }
+  },
+  {
+    path: '/adv_channel_action_list',
+    component: Layout,
+    children: [
+      {
+        path: '',
+        name: 'AdvChannelActionList',
+        component: () => import('@/views/ad/adv_channel_action_list.vue')
+      }
+    ],
+    props: {
+      menuIndex: 'adv-channel-action-list'
+    }
+  },
+  {
     path: '/ad_link',
     component: Layout,
     children: [

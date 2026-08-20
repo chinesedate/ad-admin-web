@@ -43,7 +43,7 @@
       </div>
     </el-header>
     <el-container>
-      <el-aside class="aside-menu" width="200px">
+      <el-aside class="aside-menu" width="220px">
         <el-menu
           class="side-nav-menu"
           :default-active="activeIndex"
@@ -63,6 +63,14 @@
           <el-menu-item index="adv-media-list">
             <i class="el-icon-folder-opened"></i>
             <span slot="title">预算媒体管理</span>
+          </el-menu-item>
+          <el-menu-item index="adv-channel-up-down-list">
+            <i class="el-icon-connection"></i>
+            <span slot="title">渠道上下游</span>
+          </el-menu-item>
+          <el-menu-item index="adv-channel-action-list">
+            <i class="el-icon-s-operation"></i>
+            <span slot="title">转化配置</span>
           </el-menu-item>
           <!--          <li class="menu-item">-->
           <!--            <router-link to="/home">主页</router-link>-->
@@ -167,6 +175,10 @@
           this.activeIndex = 'ad-channel';
         } else if (path.startsWith('/adv_media_list')) {
           this.activeIndex = 'adv-media-list';
+        } else if (path.startsWith('/adv_channel_up_down_list')) {
+          this.activeIndex = 'adv-channel-up-down-list';
+        } else if (path.startsWith('/adv_channel_action_list')) {
+          this.activeIndex = 'adv-channel-action-list';
         }
       },
       /**
@@ -183,6 +195,10 @@
           this.$router.push('/ad_channel');
         } else if (menuIndex === 'adv-media-list') {
           this.$router.push('/adv_media_list');
+        } else if (menuIndex === 'adv-channel-up-down-list') {
+          this.$router.push('/adv_channel_up_down_list');
+        } else if (menuIndex === 'adv-channel-action-list') {
+          this.$router.push('/adv_channel_action_list');
         }
       },
     },
