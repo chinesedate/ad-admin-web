@@ -494,11 +494,11 @@
     height: 300px;
   }
 
-  .large-img-upload /deep/ .avatar-uploader-icon:hover {
+  .large-img-upload ::v-deep .avatar-uploader-icon:hover {
     border-color: #409EFF;
   }
 
-  .large-img-upload /deep/ .avatar-uploader-icon {
+  .large-img-upload ::v-deep .avatar-uploader-icon {
     width: 258px;
     height: 298px;
     line-height: 298px;

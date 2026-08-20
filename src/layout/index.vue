@@ -1,13 +1,21 @@
 <template>
   <el-container style="width: 100%;height: 100%">
-    <el-header class="header-wrapper">
-      <div class="header-content" @click="headerClick">
-        <span>广告平台</span>
+    <el-header class="header-wrapper" height="56px">
+      <div class="header-brand" @click="headerClick">
+        <span class="header-logo">
+          <i class="el-icon-s-platform"></i>
+        </span>
+        <span class="header-title">广告平台</span>
       </div>
-      <div class="header-menu">
-        <div v-if="isLogin" class="header-menu-item">
-          <el-button type="text" @click="handleLogout">退出</el-button>
-        </div>
+      <div class="header-actions">
+        <el-button
+          v-if="isLogin"
+          class="header-logout-btn"
+          size="small"
+          icon="el-icon-switch-button"
+          @click="handleLogout">
+          退出登录
+        </el-button>
         <!--        <el-dropdown class="header-menu-item" :show-timeout="20">-->
         <!--          <span class="el-dropdown-link">-->
         <!--            项目<i class="el-icon-arrow-down el-icon&#45;&#45;right"></i>-->
@@ -35,20 +43,27 @@
       </div>
     </el-header>
     <el-container>
-      <el-aside class="aside-menu" width="140px">
-        <ul class="menu-list">
-          <li :class="['menu-item',activeIndex === 'ad-data'? 'item-selected':'']"
-              @click="handleMenuItemClick('ad-data')">
-            <span class="menu-item-content">广告数据</span>
-          </li>
-          <li :class="['menu-item',activeIndex === 'ad-link'? 'item-selected':'']"
-              @click="handleMenuItemClick('ad-link')">
-            <span class="menu-item-content">链接</span>
-          </li>
-          <li :class="['menu-item',activeIndex === 'ad-channel'? 'item-selected':'']"
-              @click="handleMenuItemClick('ad-channel')">
-            <span class="menu-item-content">渠道信息</span>
-          </li>
+      <el-aside class="aside-menu" width="200px">
+        <el-menu
+          class="side-nav-menu"
+          :default-active="activeIndex"
+          @select="handleMenuSelect">
+          <el-menu-item index="ad-data">
+            <i class="el-icon-s-data"></i>
+            <span slot="title">广告数据</span>
+          </el-menu-item>
+          <el-menu-item index="ad-link">
+            <i class="el-icon-link"></i>
+            <span slot="title">链接</span>
+          </el-menu-item>
+          <el-menu-item index="ad-channel">
+            <i class="el-icon-share"></i>
+            <span slot="title">渠道信息</span>
+          </el-menu-item>
+          <el-menu-item index="adv-media-list">
+            <i class="el-icon-folder-opened"></i>
+            <span slot="title">预算媒体管理</span>
+          </el-menu-item>
           <!--          <li class="menu-item">-->
           <!--            <router-link to="/home">主页</router-link>-->
           <!--          </li>-->
@@ -94,7 +109,7 @@
           <!--          <li class="menu-item">-->
           <!--            <router-link to="/article-audit">文章编辑</router-link>-->
           <!--          </li>-->
-        </ul>
+        </el-menu>
       </el-aside>
       <el-main>
         <router-view/>
@@ -118,6 +133,14 @@
         activeIndex: this.menuIndex
       };
     },
+    watch: {
+      menuIndex(val) {
+        this.activeIndex = val;
+      },
+      '$route.path'() {
+        this.syncActiveFromRoute();
+      }
+    },
     computed: {
       isLogin() {
         // 校验用户是否登录，未登录时跳转登录页面（token 为undefined或''时，跳转登录页面）
@@ -131,6 +154,21 @@
       handleLogout() {
         this.$store.dispatch('user/logout');
       },
+      handleMenuSelect(menuIndex) {
+        this.handleMenuItemClick(menuIndex);
+      },
+      syncActiveFromRoute() {
+        const path = this.$route.path;
+        if (path.startsWith('/ad_data') || path === '/') {
+          this.activeIndex = 'ad-data';
+        } else if (path.startsWith('/ad_link')) {
+          this.activeIndex = 'ad-link';
+        } else if (path.startsWith('/ad_channel')) {
+          this.activeIndex = 'ad-channel';
+        } else if (path.startsWith('/adv_media_list')) {
+          this.activeIndex = 'adv-media-list';
+        }
+      },
       /**
        * 处理菜单点击事件
        * @param menuIndex
@@ -143,11 +181,13 @@
           this.$router.push('/ad_link/list');
         } else if (menuIndex === 'ad-channel') {
           this.$router.push('/ad_channel');
+        } else if (menuIndex === 'adv-media-list') {
+          this.$router.push('/adv_media_list');
         }
       },
     },
     mounted() {
-
+      this.syncActiveFromRoute();
     },
     components: {}
   }
@@ -156,53 +196,120 @@
 <style lang="scss" scoped>
   .header-wrapper {
     display: flex;
-    align-content: space-between;
+    align-items: center;
     justify-content: space-between;
-    border-bottom: solid 1px #e6e6e6;
+    padding: 0 24px;
+    background-color: #fff;
+    border-bottom: 1px solid #ebeef5;
+    box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
   }
 
-  .header-content {
-    text-align: center;
-    line-height: 60px;
-    font-size: 30px;
-    cursor: pointer;
-    padding-left: 1rem;
-  }
-
-  .header-menu {
-    font-weight: 700;
-    color: #191E1E;
-    padding-right: 300px;
-    line-height: 60px;
+  .header-brand {
     display: flex;
-    align-content: center;
-    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+
+    &:hover .header-title {
+      color: #409eff;
+    }
   }
 
-  .header-menu-item {
-    padding-left: 20px;
+  .header-logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    margin-right: 10px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%);
+    color: #fff;
+    font-size: 18px;
+  }
+
+  .header-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #303133;
+    letter-spacing: 0.5px;
+    transition: color 0.2s;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+  }
+
+  .header-logout-btn {
+    color: #606266;
+    border-color: #dcdfe6;
+
+    &:hover,
+    &:focus {
+      color: #409eff;
+      border-color: #c6e2ff;
+      background-color: #ecf5ff;
+    }
   }
 
   .aside-menu {
-
-    padding-top: 20px;
+    background-color: #fff;
     border-right: solid 1px #e6e6e6;
+    overflow: hidden;
   }
 
-  .menu-list {
-    padding-left: 30px;
+  .side-nav-menu {
+    border-right: none;
+    padding-top: 8px;
+
+    ::v-deep .el-menu-item {
+      height: 48px;
+      line-height: 48px;
+      margin: 4px 8px;
+      border-radius: 4px;
+      color: #303133;
+
+      i {
+        color: #909399;
+        margin-right: 8px;
+      }
+
+      &:hover {
+        background-color: #ecf5ff;
+        color: #409eff;
+
+        i {
+          color: #409eff;
+        }
+      }
+
+      &.is-active {
+        background-color: #ecf5ff;
+        color: #409eff;
+        font-weight: 500;
+
+        i {
+          color: #409eff;
+        }
+
+        &::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 12px;
+          bottom: 12px;
+          width: 3px;
+          border-radius: 0 2px 2px 0;
+          background-color: #409eff;
+        }
+      }
+    }
   }
 
-  .menu-item {
-    padding: 10px 0;
-  }
-
-  .menu-item-content {
-    cursor: pointer;
-  }
-
-  .item-selected.item-selected .menu-item-content {
-    color: #409EFF;
+  ::v-deep .el-main {
+    background-color: #f5f7fa;
+    padding: 20px 24px;
   }
 
   .el-dropdown-link {

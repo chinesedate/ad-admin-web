@@ -157,7 +157,7 @@
         margin-left: 10px;
     }
 
-    .box-card /deep/ .el-card__body {
+    .box-card ::v-deep .el-card__body {
         padding: 0;
     }
 

@@ -843,7 +843,7 @@
     width: 300px;
   }
 
-  .name-page-dialog /deep/ .el-dialog {
+  .name-page-dialog ::v-deep .el-dialog {
     width: 40% !important;
   }
 </style>
