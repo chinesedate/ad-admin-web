@@ -72,14 +72,6 @@
             <i class="el-icon-s-operation"></i>
             <span slot="title">转化配置</span>
           </el-menu-item>
-          <el-menu-item index="adv-budget-link-list">
-            <i class="el-icon-document"></i>
-            <span slot="title">预算链接</span>
-          </el-menu-item>
-          <el-menu-item index="adv-media-link-list">
-            <i class="el-icon-paperclip"></i>
-            <span slot="title">媒体链接</span>
-          </el-menu-item>
           <!--          <li class="menu-item">-->
           <!--            <router-link to="/home">主页</router-link>-->
           <!--          </li>-->
@@ -187,10 +179,6 @@
           this.activeIndex = 'adv-channel-up-down-list';
         } else if (path.startsWith('/adv_channel_action_list')) {
           this.activeIndex = 'adv-channel-action-list';
-        } else if (path.startsWith('/adv_budget_link_list')) {
-          this.activeIndex = 'adv-budget-link-list';
-        } else if (path.startsWith('/adv_media_link_list')) {
-          this.activeIndex = 'adv-media-link-list';
         }
       },
       /**
@@ -211,10 +199,6 @@
           this.$router.push('/adv_channel_up_down_list');
         } else if (menuIndex === 'adv-channel-action-list') {
           this.$router.push('/adv_channel_action_list');
-        } else if (menuIndex === 'adv-budget-link-list') {
-          this.$router.push('/adv_budget_link_list');
-        } else if (menuIndex === 'adv-media-link-list') {
-          this.$router.push('/adv_media_link_list');
         }
       },
     },

@@ -103,34 +103,6 @@ const routes = [
     }
   },
   {
-    path: '/adv_budget_link_list',
-    component: Layout,
-    children: [
-      {
-        path: '',
-        name: 'AdvBudgetLinkList',
-        component: () => import('@/views/ad/adv_budget_link_list.vue')
-      }
-    ],
-    props: {
-      menuIndex: 'adv-budget-link-list'
-    }
-  },
-  {
-    path: '/adv_media_link_list',
-    component: Layout,
-    children: [
-      {
-        path: '',
-        name: 'AdvMediaLinkList',
-        component: () => import('@/views/ad/adv_media_link_list.vue')
-      }
-    ],
-    props: {
-      menuIndex: 'adv-media-link-list'
-    }
-  },
-  {
     path: '/ad_link',
     component: Layout,
     children: [

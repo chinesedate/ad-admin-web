@@ -194,17 +194,6 @@
                   <el-form-item label="系统类型：">
                     <span class="selectable-text">{{advLinkInfo.os_type_str || '-'}}</span>
                   </el-form-item>
-                  <el-form-item v-if="props.row.param_values && props.row.param_values.length" label="链接参数：">
-                    <div class="param-value-panel">
-                      <div
-                        v-for="item in props.row.param_values"
-                        :key="item.param_name"
-                        class="param-value-item">
-                        <span class="param-value-name">{{ item.param_name }}</span>
-                        <span class="param-value-text">{{ item.param_value || '—' }}</span>
-                      </div>
-                    </div>
-                  </el-form-item>
                   <el-form-item label="备注信息：">
                     <span class="selectable-text">{{props.row.extra_info || '-'}}</span>
                   </el-form-item>
@@ -250,10 +239,6 @@
           <el-table-column
             prop="create_time"
             label="添加时间">
-          </el-table-column>
-          <el-table-column
-            prop="update_time"
-            label="修改时间">
           </el-table-column>
           <el-table-column
             label="操作">
@@ -309,8 +294,7 @@
           <el-select
             v-model="media_link_form.channel_code"
             filterable
-            placeholder="请选择"
-            @change="handleMediaChannelChange">
+            placeholder="请选择">
             <el-option
               v-for="item in channel_media_code_list"
               :key="item.value"
@@ -318,28 +302,6 @@
               :value="item.value">
             </el-option>
           </el-select>
-        </el-form-item>
-        <el-form-item v-if="mediaLinkParamHint.length" label="参数字典：">
-          <div class="link-param-hint">
-            <el-tag
-              v-for="item in mediaLinkParamHint"
-              :key="item.param_name"
-              size="small"
-              class="link-param-tag"
-              :type="Number(item.param_required) === 0 ? 'danger' : 'info'">
-              {{ item.param_name }}{{ Number(item.param_required) === 0 ? '（必填）' : '' }}
-            </el-tag>
-          </div>
-        </el-form-item>
-        <el-form-item
-          v-for="item in mediaLinkParamFields"
-          :key="'add-' + item.param_name"
-          :label="item.param_name + '：'"
-          :required="Number(item.param_required) === 0">
-          <el-input
-            v-model="item.param_value"
-            maxlength="500"
-            :placeholder="mediaParamInputPlaceholder(item.param_name)"/>
         </el-form-item>
         <el-form-item label="回调率：" prop="conversion_rate">
           <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
@@ -416,28 +378,6 @@
         :rules="media_modify_rules"
         label-width="100px"
       >
-        <el-form-item v-if="mediaLinkModifyParamHint.length" label="参数字典：">
-          <div class="link-param-hint">
-            <el-tag
-              v-for="item in mediaLinkModifyParamHint"
-              :key="item.param_name"
-              size="small"
-              class="link-param-tag"
-              :type="Number(item.param_required) === 0 ? 'danger' : 'info'">
-              {{ item.param_name }}{{ Number(item.param_required) === 0 ? '（必填）' : '' }}
-            </el-tag>
-          </div>
-        </el-form-item>
-        <el-form-item
-          v-for="item in mediaLinkModifyParamFields"
-          :key="'edit-' + item.param_name"
-          :label="item.param_name + '：'"
-          :required="Number(item.param_required) === 0">
-          <el-input
-            v-model="item.param_value"
-            maxlength="500"
-            :placeholder="mediaParamInputPlaceholder(item.param_name)"/>
-        </el-form-item>
         <el-form-item label="回调率：" prop="conversion_rate">
           <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
             <el-input-number
@@ -506,14 +446,11 @@
   import {
     addMediaLink,
     fetchAdChannelCodeList,
-    fetchMediaLinkParam,
     getAdvLink,
     updateAdvLink,
     pageListMediaLink,
     removeMediaLink, updateMediaLink
   } from "@/api/ad-data";
-
-  const MEDIA_AUTO_PARAM_NAMES = ['channel_id', 'customer_id', 'app_id', 'rz_ch', 'CH']
 
   export default {
     name: "LinkDetail",
@@ -632,10 +569,6 @@
         },
         // // 渠道-应用回调率
         media_conversion_rate_list: [40, 50, 60, 70, 80],
-        mediaLinkParamHint: [],
-        mediaLinkParamFields: [],
-        mediaLinkModifyParamHint: [],
-        mediaLinkModifyParamFields: [],
         // 复制按钮loading
         copyAllLoading: false,
       }
@@ -652,14 +585,10 @@
        * 触发添加媒体链接
        */
       activeMediaLinkAdd() {
-        this.mediaLinkParamHint = []
-        this.mediaLinkParamFields = []
         this.dialogVisible = true
       },
       closeMediaLinkAdd() {
         this.dialogVisible = false
-        this.mediaLinkParamHint = []
-        this.mediaLinkParamFields = []
         // 关闭时重置表单
         this.$refs.mediaFormRef.resetFields()
       },
@@ -669,81 +598,17 @@
       activeMediaLinkModify(row) {
         this.media_link_modify_form = {
           id: row.id,
-          channel_code: row.channel_code,
           conversion_rate: row.conversion_rate,
           rate_min_limit: row.rate_min_limit,
           rate_min_limit_num: row.rate_min_limit_num,
           extra_info: row.extra_info
         }
-        this.loadMediaLinkModifyParamFields(row.channel_code, row.param_values || [])
         this.modifyDialogVisible = true;
       },
       closeMediaLinkModify() {
         this.modifyDialogVisible = false;
-        this.mediaLinkModifyParamHint = []
-        this.mediaLinkModifyParamFields = []
         // 关闭时重置表单
         this.$refs.mediaFormModifyRef.resetFields()
-      },
-      mediaParamInputPlaceholder(paramName) {
-        if (MEDIA_AUTO_PARAM_NAMES.includes(paramName)) {
-          return '留空则根据生成的链接自动填充'
-        }
-        return '请输入参数值'
-      },
-      buildMediaParamFields(paramList, existingValues) {
-        const valueMap = {}
-        for (const item of existingValues || []) {
-          valueMap[item.param_name] = item.param_value || ''
-        }
-        return (paramList || []).map(item => ({
-          param_name: item.param_name,
-          param_required: Number(item.param_required),
-          param_value: valueMap[item.param_name] || ''
-        }))
-      },
-      loadMediaLinkParamFields(channelCode, existingValues) {
-        if (!channelCode) {
-          this.mediaLinkParamHint = []
-          this.mediaLinkParamFields = []
-          return
-        }
-        fetchMediaLinkParam(channelCode).then(res => {
-          const data = res.data.data
-          const params = (data && data.params) ? data.params.filter(item => Number(item.is_active) === 0) : []
-          this.mediaLinkParamHint = params
-          this.mediaLinkParamFields = this.buildMediaParamFields(params, existingValues)
-        }).catch(() => {
-          this.mediaLinkParamHint = []
-          this.mediaLinkParamFields = []
-        })
-      },
-      loadMediaLinkModifyParamFields(channelCode, existingValues) {
-        if (!channelCode) {
-          this.mediaLinkModifyParamHint = []
-          this.mediaLinkModifyParamFields = []
-          return
-        }
-        fetchMediaLinkParam(channelCode).then(res => {
-          const data = res.data.data
-          const params = (data && data.params) ? data.params.filter(item => Number(item.is_active) === 0) : []
-          this.mediaLinkModifyParamHint = params
-          this.mediaLinkModifyParamFields = this.buildMediaParamFields(params, existingValues)
-        }).catch(() => {
-          this.mediaLinkModifyParamHint = []
-          this.mediaLinkModifyParamFields = []
-        })
-      },
-      handleMediaChannelChange(channelCode) {
-        this.loadMediaLinkParamFields(channelCode, [])
-      },
-      buildMediaLinkParamValues(paramFields) {
-        return (paramFields || [])
-          .map(item => ({
-            param_name: (item.param_name || '').trim(),
-            param_value: (item.param_value || '').trim()
-          }))
-          .filter(item => item.param_name && item.param_value)
       },
       /**
        * 折叠面板展开或收起触发
@@ -834,58 +699,51 @@
        * 添加媒体链接
        */
       handleMediaLinkAdd() {
-        this.$refs.mediaFormRef.validate(valid => {
-          if (!valid) {
-            return false
-          }
-          const adv_link_info = {
-            adv_link_id: this.linkId,
-            channel_code: this.media_link_form.channel_code,
-            conversion_rate: this.media_link_form.conversion_rate,
-            rate_min_limit: this.media_link_form.rate_min_limit,
-            rate_min_limit_num: this.media_link_form.rate_min_limit_num,
-            extra_info: this.media_link_form.extra_info,
-            param_values: this.buildMediaLinkParamValues(this.mediaLinkParamFields)
-          }
-          this.submitLoading = true
-          addMediaLink(adv_link_info).then(() => {
-            this.$message.success('添加成功')
+        const adv_link_info = {
+          adv_link_id: this.linkId,
+          channel_code: this.media_link_form.channel_code,
+          conversion_rate: this.media_link_form.conversion_rate,
+          rate_min_limit: this.media_link_form.rate_min_limit,
+          rate_min_limit_num: this.media_link_form.rate_min_limit_num,
+          extra_info: this.media_link_form.extra_info
+        }
+        addMediaLink(adv_link_info).then(res => {
+            console.log('广告主链接添加完成:', res)
             this.closeMediaLinkAdd();
             this.listAdMediaLink();
-          }).catch(err => {
-            this.$message.error(err.message || '添加失败')
-          }).finally(() => {
-            this.submitLoading = false
-          })
-        })
+          }
+        );
       },
       /**
        * 编辑媒体链接
        */
       handleMediaLinkModify() {
-        this.$refs.mediaFormModifyRef.validate(valid => {
-          if (!valid) {
-            return false
-          }
-          const media_link_info = {
-            id: this.media_link_modify_form.id,
-            conversion_rate: this.media_link_modify_form.conversion_rate,
-            rate_min_limit: this.media_link_modify_form.rate_min_limit,
-            rate_min_limit_num: this.media_link_modify_form.rate_min_limit_num,
-            extra_info: this.media_link_modify_form.extra_info,
-            param_values: this.buildMediaLinkParamValues(this.mediaLinkModifyParamFields)
-          }
-          this.submitLoading = true
-          updateMediaLink(media_link_info).then(() => {
-            this.$message.success('更新成功')
-            this.listAdMediaLink();
+        const media_link_info = {
+          id: this.media_link_modify_form.id,
+          conversion_rate: this.media_link_modify_form.conversion_rate,
+          rate_min_limit: this.media_link_modify_form.rate_min_limit,
+          rate_min_limit_num: this.media_link_modify_form.rate_min_limit_num,
+          extra_info: this.media_link_modify_form.extra_info
+        }
+        updateMediaLink(media_link_info).then(res => {
+            console.log('媒体链接信息更新完成:', res)
+            const index = this.tableData.findIndex(item => item.id === this.media_link_modify_form.id)
+            if (index !== -1) {
+              const newRow = JSON.parse(JSON.stringify(this.tableData[index]))
+              newRow.conversion_rate = this.media_link_modify_form.conversion_rate
+              newRow.rate_min_limit = this.media_link_modify_form.rate_min_limit
+              newRow.rate_min_limit_num = this.media_link_modify_form.rate_min_limit_num
+              if (this.media_link_modify_form.rate_min_limit) {
+                newRow.conversion_rate_label = this.media_link_modify_form.conversion_rate + '% 开启 ' + this.media_link_modify_form.rate_min_limit_num
+              } else {
+                newRow.conversion_rate_label = this.media_link_modify_form.conversion_rate + '% 关闭 '
+              }
+              newRow.extra_info = this.media_link_modify_form.extra_info
+              this.$set(this.tableData, index, newRow)
+            }
             this.closeMediaLinkModify();
-          }).catch(err => {
-            this.$message.error(err.message || '更新失败')
-          }).finally(() => {
-            this.submitLoading = false
-          })
-        })
+          }
+        );
       },
       handlePageChange(page) {
         // 确保 pageNum 被正确设置
@@ -1245,32 +1103,5 @@
       color: #606266;
       display: inline-block;
     }
-  }
-
-  .param-value-panel {
-    padding: 4px 0;
-  }
-
-  .param-value-item {
-    line-height: 28px;
-  }
-
-  .param-value-name {
-    display: inline-block;
-    width: 120px;
-    color: #606266;
-  }
-
-  .param-value-text {
-    color: #303133;
-  }
-
-  .link-param-hint {
-    line-height: 28px;
-  }
-
-  .link-param-tag {
-    margin-right: 8px;
-    margin-bottom: 4px;
   }
 </style>

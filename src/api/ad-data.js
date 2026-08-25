@@ -133,8 +133,7 @@ export function addMediaLink(data) {
   return request({
     url: '/track/admin/media-link',
     method: 'post',
-    data,
-    skipGlobalError: true
+    data
   });
 }
 
@@ -156,8 +155,7 @@ export function updateMediaLink(data) {
   return request({
     url: '/track/admin/media-link',
     method: 'put',
-    data,
-    skipGlobalError: true
+    data
   })
 }
 
@@ -199,36 +197,6 @@ export function removeAdvMedia(id) {
   return request({
     url: `/track/admin/adv-media/${id}`,
     method: 'delete'
-  })
-}
-
-export function fetchAdvLinkParam(channelCode) {
-  return request({
-    url: `/track/admin/adv-link-param/${encodeURIComponent(channelCode)}`,
-    method: 'get'
-  })
-}
-
-export function saveAdvLinkParam(data) {
-  return request({
-    url: '/track/admin/adv-link-param',
-    method: 'put',
-    data
-  })
-}
-
-export function fetchMediaLinkParam(channelCode) {
-  return request({
-    url: `/track/admin/media-link-param/${encodeURIComponent(channelCode)}`,
-    method: 'get'
-  })
-}
-
-export function saveMediaLinkParam(data) {
-  return request({
-    url: '/track/admin/media-link-param',
-    method: 'put',
-    data
   })
 }
 
