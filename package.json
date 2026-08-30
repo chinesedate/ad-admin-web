@@ -8,8 +8,8 @@
   "scripts": {
     "preserve": "node scripts/check-node-version.js",
     "prebuild": "node scripts/check-node-version.js",
-    "serve": "NODE_OPTIONS=--openssl-legacy-provider vue-cli-service serve",
-    "build": "NODE_OPTIONS=--openssl-legacy-provider vue-cli-service build",
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
