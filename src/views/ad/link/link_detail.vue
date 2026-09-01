@@ -241,7 +241,8 @@
             label="添加时间">
           </el-table-column>
           <el-table-column
-            label="操作">
+            label="操作"
+            width="300">
             <template #default="scope">
               <el-button
                 class="media-link-operate-button"
