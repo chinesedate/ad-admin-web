@@ -126,6 +126,7 @@
         </el-form-item>
         <el-form-item label="系统类型：" prop="os_type">
           <el-radio-group v-model="link_form.os_type">
+            <el-radio :label="0">不限</el-radio>
             <el-radio :label="1">安卓</el-radio>
             <el-radio :label="2">IOS</el-radio>
           </el-radio-group>
@@ -223,7 +224,7 @@
         submitLoading: false,
         link_form: {
           channel_code: '',
-          os_type: 1,
+          os_type: 0,
           app_name: '',
           pkg_name: '',
           link_code: '',
@@ -347,7 +348,9 @@
               this.tableData = res.data.data.list;
               for (const adv_link of this.tableData) {
                 const os_type = adv_link.os_type;
-                if (os_type === 1) {
+                if (os_type === 0) {
+                  adv_link.os_type = "不限"
+                } else if (os_type === 1) {
                   adv_link.os_type = "安卓"
                 } else if (os_type === 2) {
                   adv_link.os_type = "IOS"

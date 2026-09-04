@@ -565,7 +565,7 @@
         advLinkInfo: {
           channel_name: '',
           channel_code: '',
-          os_type: 1,
+          os_type: 0,
           os_type_str: '',
           app_name: '',
           pkg_name: '',
@@ -782,7 +782,9 @@
           if (res.data.data != null) {
             this.advLinkInfo = res.data.data;
             const os_type = this.advLinkInfo.os_type;
-            if (os_type === 1) {
+            if (os_type === 0) {
+              this.advLinkInfo.os_type_str = "不限"
+            } else if (os_type === 1) {
               this.advLinkInfo.os_type_str = "安卓"
             } else if (os_type === 2) {
               this.advLinkInfo.os_type_str = "IOS"

@@ -51,19 +51,23 @@
               <div v-else class="param-value-empty">暂无解析参数，请配置点击链接并保存</div>
             </template>
           </el-table-column>
-          <el-table-column prop="id" label="ID" min-width="80" align="center" show-overflow-tooltip/>
-          <el-table-column prop="channel_name" label="广告主" min-width="110" show-overflow-tooltip/>
-          <el-table-column prop="os_type" label="系统" min-width="80" align="center">
+          <el-table-column prop="id" label="ID" width="100" align="center"/>
+          <el-table-column prop="channel_name" label="广告主" width="120" show-overflow-tooltip/>
+          <el-table-column prop="os_type" label="系统" width="100" align="center">
             <template #default="scope">
               {{ formatOsType(scope.row.os_type) }}
             </template>
           </el-table-column>
-          <el-table-column prop="app_name" label="应用名称" min-width="120" show-overflow-tooltip/>
-          <el-table-column prop="pkg_name" label="包名" min-width="120" show-overflow-tooltip/>
-          <el-table-column prop="link_code" label="链接标识" min-width="110" show-overflow-tooltip/>
-          <el-table-column prop="create_time" label="添加时间" min-width="150" show-overflow-tooltip/>
-          <el-table-column prop="update_time" label="修改时间" min-width="150" show-overflow-tooltip/>
-          <el-table-column label="操作" min-width="160" align="center" class-name="adv-media-op-col">
+          <el-table-column prop="app_name" label="应用名称" width="200" show-overflow-tooltip/>
+          <el-table-column prop="pkg_name" label="包名" width="200" show-overflow-tooltip/>
+          <el-table-column
+            prop="click_link"
+            label="预算监测"
+            min-width="200"
+            show-overflow-tooltip/>
+          <el-table-column prop="link_code" label="链接标识" width="200" show-overflow-tooltip/>
+          <el-table-column prop="create_time" label="添加时间" width="200" show-overflow-tooltip/>
+          <el-table-column label="操作" width="200" align="center" class-name="adv-media-op-col">
             <template #default="scope">
               <el-button type="primary" size="mini" class="adv-link-operate-button" @click="openEditDialog(scope.row)">编辑</el-button>
               <el-popconfirm title="确定删除吗？" @confirm="handleRemove(scope.row)">
@@ -105,7 +109,7 @@
             placeholder="请选择广告主"
             @change="handleChannelChange">
             <el-option
-              v-for="item in channel_adv_code_list"
+              v-for="item in addAdvChannelOptions"
               :key="item.value"
               :label="item.label"
               :value="item.value"/>
@@ -113,6 +117,7 @@
         </el-form-item>
         <el-form-item label="系统类型：" prop="os_type">
           <el-radio-group v-model="form.os_type" :disabled="isEdit">
+            <el-radio :label="0">不限</el-radio>
             <el-radio :label="1">安卓</el-radio>
             <el-radio :label="2">IOS</el-radio>
           </el-radio-group>
@@ -124,7 +129,7 @@
           <el-input v-model="form.pkg_name" maxlength="100" placeholder="请输入应用包名"/>
         </el-form-item>
         <el-form-item label="链接标识：" prop="link_code">
-          <el-input v-model="form.link_code" maxlength="500" placeholder="选填"/>
+          <el-input v-model="form.link_code" maxlength="500" :placeholder="linkCodePlaceholder"/>
         </el-form-item>
         <el-form-item label="下载链接：" prop="download_link">
           <el-input v-model="form.download_link" maxlength="2000" placeholder="选填"/>
@@ -200,6 +205,7 @@
         filter_channel_code: '',
         tableData: [],
         channel_adv_code_list: [],
+        add_adv_channel_code_list: [],
         linkParamHint: [],
         dialogVisible: false,
         isEdit: false,
@@ -207,7 +213,7 @@
         form: {
           id: null,
           channel_code: '',
-          os_type: 1,
+          os_type: 0,
           app_name: '',
           pkg_name: '',
           link_code: '',
@@ -225,8 +231,42 @@
         }
       }
     },
+    computed: {
+      addAdvChannelOptions() {
+        if (this.isEdit && this.form.channel_code) {
+          const inWhitelist = this.add_adv_channel_code_list.some(
+            item => item.value === this.form.channel_code
+          )
+          if (inWhitelist) {
+            return this.add_adv_channel_code_list
+          }
+          const current = this.channel_adv_code_list.find(
+            item => item.value === this.form.channel_code
+          )
+          if (current) {
+            return [current, ...this.add_adv_channel_code_list]
+          }
+          return [{
+            value: this.form.channel_code,
+            label: this.form.channel_code
+          }, ...this.add_adv_channel_code_list]
+        }
+        return this.add_adv_channel_code_list
+      },
+      linkCodePlaceholder() {
+        const placeholders = {
+          inteyun: '不填则按 adId__channelId',
+          zhijie: '不填则按 ckey',
+          heimi: '不填则按 channel_pkg 或 did',
+          doujing: '不填则按 djMtId 或 djMtId__djPt',
+          chengtou: '不填则按 offer_id__aff_id__ads_code'
+        }
+        return placeholders[this.form.channel_code] || '选填'
+      }
+    },
     mounted() {
       this.loadAdvertiserChannels()
+      this.loadAddAdvertiserChannels()
       this.listBudgetLinks()
     },
     watch: {
@@ -240,6 +280,9 @@
     },
     methods: {
       formatOsType(value) {
+        if (Number(value) === 0) {
+          return '不限'
+        }
         if (Number(value) === 1) {
           return '安卓'
         }
@@ -274,6 +317,19 @@
           }))
         })
       },
+      loadAddAdvertiserChannels() {
+        pageListAdvMedia({
+          page_num: 1,
+          page_size: 500,
+          query_param: {up_down_type: 1, budget_link_whitelist: 1}
+        }).then(res => {
+          const list = (res.data.data && res.data.data.list) || []
+          this.add_adv_channel_code_list = list.map(item => ({
+            value: item.channel_code,
+            label: item.channel_name
+          }))
+        })
+      },
       listBudgetLinks() {
         pageListAdLink({
           page_num: this.pageNum,
@@ -294,7 +350,7 @@
         this.form = {
           id: null,
           channel_code: '',
-          os_type: 1,
+          os_type: 0,
           app_name: '',
           pkg_name: '',
           link_code: '',
@@ -453,6 +509,14 @@
   }
 
   .adv-media-table {
+    width: 100%;
+
+    ::v-deep .el-table__header-wrapper table,
+    ::v-deep .el-table__body-wrapper table {
+      table-layout: fixed;
+      width: 100%;
+    }
+
     ::v-deep .adv-media-op-col .cell {
       white-space: normal;
       overflow: visible;
