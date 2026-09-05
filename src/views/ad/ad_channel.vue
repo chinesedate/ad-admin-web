@@ -319,6 +319,7 @@
           extra_info: ''
         },
         media_modify_rules: {
+          app_name: [{required: true, message: '应用名称必填'}],
           conversion_rate: [{required: true}],
           rate_min_limit: [{required: true}]
         },

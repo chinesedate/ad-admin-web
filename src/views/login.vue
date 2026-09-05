@@ -6,12 +6,12 @@
           <i class="el-icon-s-platform"></i>
         </div>
         <h1 class="brand-title">瑞樟广告平台</h1>
-        <p class="brand-desc">广告投放监测 · 渠道链接管理 · 预算配置一体化后台</p>
-        <ul class="brand-features">
-          <li><i class="el-icon-check"></i>广告数据与转化追踪</li>
-          <li><i class="el-icon-check"></i>预算媒体与链接解析</li>
-          <li><i class="el-icon-check"></i>渠道上下游配置</li>
-        </ul>
+        <p class="brand-desc">专业、高效广告投放平台</p>
+<!--        <ul class="brand-features">-->
+<!--          <li><i class="el-icon-check"></i>广告数据与转化追踪</li>-->
+<!--          <li><i class="el-icon-check"></i>预算媒体与链接解析</li>-->
+<!--          <li><i class="el-icon-check"></i>渠道上下游配置</li>-->
+<!--        </ul>-->
       </div>
       <div class="brand-decoration brand-decoration-1"></div>
       <div class="brand-decoration brand-decoration-2"></div>
@@ -232,13 +232,14 @@
   }
 
   .login-panel {
+    position: relative;
     width: 480px;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 48px 40px 24px;
+    padding: 48px 40px 40px;
     background: #fff;
     box-shadow: -8px 0 32px rgba(15, 23, 42, 0.06);
   }
@@ -314,10 +315,13 @@
   }
 
   .login-footer {
-    margin-top: auto;
-    padding-top: 32px;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 16px;
     font-size: 12px;
     color: #c0c4cc;
+    text-align: center;
   }
 
   @media (max-width: 900px) {
