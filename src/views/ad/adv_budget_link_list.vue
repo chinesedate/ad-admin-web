@@ -134,13 +134,22 @@
         <el-form-item label="下载链接：" prop="download_link">
           <el-input v-model="form.download_link" maxlength="2000" placeholder="选填"/>
         </el-form-item>
+        <el-form-item
+          v-if="form.channel_code === 'wanmob'"
+          label="转化类型："
+          prop="wanmob_event_type">
+          <el-radio-group v-model="form.wanmob_event_type">
+            <el-radio :label="1">激活</el-radio>
+            <el-radio :label="2">注册</el-radio>
+          </el-radio-group>
+        </el-form-item>
         <el-form-item label="点击链接：" prop="click_link">
           <el-input
             v-model="form.click_link"
             maxlength="4000"
             type="textarea"
             :rows="2"
-            placeholder="保存后将按预算媒体中配置的链接参数校验并解析"/>
+            :placeholder="clickLinkPlaceholder"/>
         </el-form-item>
         <el-form-item label="曝光链接：" prop="show_link">
           <el-input v-model="form.show_link" maxlength="4000" type="textarea" :rows="2" placeholder="选填"/>
@@ -156,7 +165,7 @@
               size="small"
               class="link-param-tag"
               :type="Number(item.param_required) === 0 ? 'danger' : 'info'">
-              {{ item.param_name }}{{ Number(item.param_required) === 0 ? '（必填）' : '' }}
+              {{ formatLinkParamLabel(item) }}
             </el-tag>
           </div>
         </el-form-item>
@@ -214,12 +223,23 @@
           click_link: '',
           show_link: '',
           extra_info: '',
-          param_values: []
+          param_values: [],
+          wanmob_event_type: 1
         },
         rules: {
           channel_code: [{required: true, message: '请选择广告主', trigger: 'change'}],
           os_type: [{required: true, message: '请选择系统类型', trigger: 'change'}],
-          app_name: [{required: true, message: '请输入应用名称', trigger: 'blur'}]
+          app_name: [{required: true, message: '请输入应用名称', trigger: 'blur'}],
+          wanmob_event_type: [{
+            validator: (rule, value, callback) => {
+              if (this.form.channel_code === 'wanmob' && value !== 1 && value !== 2) {
+                callback(new Error('请选择转化类型'))
+                return
+              }
+              callback()
+            },
+            trigger: 'change'
+          }]
         }
       }
     },
@@ -251,9 +271,16 @@
           zhijie: '不填则按 ckey',
           heimi: '不填则按 channel_pkg 或 did',
           doujing: '不填则按 djMtId 或 djMtId__djPt',
-          chengtou: '不填则按 offer_id__aff_id__ads_code'
+          chengtou: '不填则按 offer_id__aff_id__ads_code',
+          wanmob: '不填则按 product_id'
         }
         return placeholders[this.form.channel_code] || '选填'
+      },
+      clickLinkPlaceholder() {
+        if (this.form.channel_code === 'wanmob') {
+          return '粘贴 WanMob 官方监测链接即可，转化类型由上方选项决定，保存时自动拼接 event_type'
+        }
+        return '保存后将按预算媒体中配置的链接参数校验并解析'
       }
     },
     mounted() {
@@ -262,6 +289,41 @@
       this.listBudgetLinks()
     },
     methods: {
+      formatLinkParamLabel(item) {
+        const name = item.param_name || ''
+        const required = Number(item.param_required) === 0
+        if (this.form.channel_code === 'wanmob' && name === 'event_type') {
+          return 'event_type（保存时按转化类型自动拼接）'
+        }
+        return `${name}${required ? '（必填）' : ''}`
+      },
+      stripEventTypeFromClickLink(clickLink) {
+        const raw = (clickLink || '').trim()
+        if (!raw) {
+          return {url: '', eventType: ''}
+        }
+        try {
+          const parsed = new URL(raw)
+          const eventType = parsed.searchParams.get('event_type') || ''
+          parsed.searchParams.delete('event_type')
+          return {url: parsed.toString(), eventType}
+        } catch (e) {
+          return {url: raw, eventType: ''}
+        }
+      },
+      resolveWanmobFormFields(data) {
+        let clickLink = data.click_link || ''
+        let wanmobEventType = 1
+        if (data.channel_code !== 'wanmob') {
+          return {clickLink, wanmobEventType}
+        }
+        const stripped = this.stripEventTypeFromClickLink(clickLink)
+        clickLink = stripped.url
+        const paramEventType = ((data.param_values || []).find(item => item.param_name === 'event_type') || {}).param_value
+        const eventType = paramEventType || stripped.eventType
+        wanmobEventType = Number(eventType) === 2 ? 2 : 1
+        return {clickLink, wanmobEventType}
+      },
       formatOsType(value) {
         if (Number(value) === 0) {
           return '不限'
@@ -341,7 +403,8 @@
           click_link: '',
           show_link: '',
           extra_info: '',
-          param_values: []
+          param_values: [],
+          wanmob_event_type: 1
         }
         this.linkParamHint = []
       },
@@ -359,6 +422,9 @@
       },
       handleChannelChange(channelCode) {
         this.loadLinkParamHint(channelCode)
+        if (channelCode === 'wanmob' && this.form.wanmob_event_type !== 1 && this.form.wanmob_event_type !== 2) {
+          this.form.wanmob_event_type = 1
+        }
       },
       openAddDialog() {
         this.isEdit = false
@@ -374,6 +440,7 @@
         this.isEdit = true
         getAdvLink(row.id).then(res => {
           const data = res.data.data || {}
+          const wanmobFields = this.resolveWanmobFormFields(data)
           this.form = {
             id: data.id,
             channel_code: data.channel_code,
@@ -382,10 +449,11 @@
             pkg_name: data.pkg_name || '',
             link_code: data.link_code || '',
             download_link: data.download_link || '',
-            click_link: data.click_link || '',
+            click_link: wanmobFields.clickLink,
             show_link: data.show_link || '',
             extra_info: data.extra_info || '',
-            param_values: data.param_values || []
+            param_values: data.param_values || [],
+            wanmob_event_type: wanmobFields.wanmobEventType
           }
           this.loadLinkParamHint(data.channel_code)
           this.dialogVisible = true
@@ -406,7 +474,7 @@
         }
       },
       buildSubmitPayload() {
-        return {
+        const payload = {
           id: this.form.id,
           channel_code: this.form.channel_code,
           os_type: this.form.os_type,
@@ -418,6 +486,10 @@
           show_link: this.form.show_link.trim(),
           extra_info: this.form.extra_info.trim()
         }
+        if (this.form.channel_code === 'wanmob') {
+          payload.event_type = String(this.form.wanmob_event_type)
+        }
+        return payload
       },
       handleSubmit() {
         this.$refs.formRef.validate(valid => {
@@ -538,4 +610,5 @@
     line-height: 24px;
     color: #606266;
   }
+
 </style>
