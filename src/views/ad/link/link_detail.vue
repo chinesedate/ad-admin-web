@@ -522,20 +522,6 @@
       linkId: Number
     },
     data() {
-      // 自定义校验函数
-      const validatePkgName = (rule, value, callback) => {
-        if (this.advLinkInfo.os_type === 1) {
-          // 安卓系统时，包名为必填
-          if (!value) {
-            callback(new Error('请输入应用包名'))
-          } else {
-            callback()
-          }
-        } else {
-          // IOS系统时，包名可选
-          callback()
-        }
-      }
       return {
         // 折叠面板展开收起状态
         collapseClose: true,
@@ -591,9 +577,6 @@
         rules: {
           app_name: [
             {required: true, message: '请输入应用名称', trigger: 'blur'}
-          ],
-          pkg_name: [
-            {validator: validatePkgName, trigger: 'blur'}  // 使用自定义校验
           ],
           download_link: [
             {type: 'url', message: '请输入正确的URL地址', trigger: 'blur'},

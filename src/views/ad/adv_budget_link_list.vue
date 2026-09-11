@@ -117,16 +117,16 @@
         </el-form-item>
         <el-form-item label="系统类型：" prop="os_type">
           <el-radio-group v-model="form.os_type" :disabled="isEdit">
-            <el-radio :label="0">不限</el-radio>
             <el-radio :label="1">安卓</el-radio>
             <el-radio :label="2">IOS</el-radio>
+            <el-radio :label="0">不限</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="应用名称：" prop="app_name">
           <el-input v-model="form.app_name" maxlength="100" placeholder="请输入应用名称"/>
         </el-form-item>
-        <el-form-item label="应用包名：" :required="form.os_type === 1" prop="pkg_name">
-          <el-input v-model="form.pkg_name" maxlength="100" placeholder="请输入应用包名"/>
+        <el-form-item label="应用包名：" prop="pkg_name">
+          <el-input v-model="form.pkg_name" maxlength="100" placeholder="选填"/>
         </el-form-item>
         <el-form-item label="链接标识：" prop="link_code">
           <el-input v-model="form.link_code" maxlength="500" :placeholder="linkCodePlaceholder"/>
@@ -190,13 +190,6 @@
   export default {
     name: 'adv_budget_link_list',
     data() {
-      const validatePkgName = (rule, value, callback) => {
-        if (this.form.os_type === 1 && !(value || '').trim()) {
-          callback(new Error('请输入应用包名'))
-          return
-        }
-        callback()
-      }
       return {
         pageNum: 1,
         pageSize: 10,
@@ -213,7 +206,7 @@
         form: {
           id: null,
           channel_code: '',
-          os_type: 0,
+          os_type: 1,
           app_name: '',
           pkg_name: '',
           link_code: '',
@@ -226,8 +219,7 @@
         rules: {
           channel_code: [{required: true, message: '请选择广告主', trigger: 'change'}],
           os_type: [{required: true, message: '请选择系统类型', trigger: 'change'}],
-          app_name: [{required: true, message: '请输入应用名称', trigger: 'blur'}],
-          pkg_name: [{validator: validatePkgName, trigger: 'blur'}]
+          app_name: [{required: true, message: '请输入应用名称', trigger: 'blur'}]
         }
       }
     },
@@ -268,15 +260,6 @@
       this.loadAdvertiserChannels()
       this.loadAddAdvertiserChannels()
       this.listBudgetLinks()
-    },
-    watch: {
-      'form.os_type'() {
-        this.$nextTick(() => {
-          if (this.$refs.formRef) {
-            this.$refs.formRef.clearValidate('pkg_name')
-          }
-        })
-      }
     },
     methods: {
       formatOsType(value) {
@@ -350,7 +333,7 @@
         this.form = {
           id: null,
           channel_code: '',
-          os_type: 0,
+          os_type: 1,
           app_name: '',
           pkg_name: '',
           link_code: '',

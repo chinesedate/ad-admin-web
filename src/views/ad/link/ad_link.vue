@@ -126,16 +126,16 @@
         </el-form-item>
         <el-form-item label="系统类型：" prop="os_type">
           <el-radio-group v-model="link_form.os_type">
-            <el-radio :label="0">不限</el-radio>
             <el-radio :label="1">安卓</el-radio>
             <el-radio :label="2">IOS</el-radio>
+            <el-radio :label="0">不限</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="应用名称：" prop="app_name">
           <el-input class="adv-link-item" v-model="link_form.app_name" placeholder="请输入应用名称"/>
         </el-form-item>
-        <el-form-item label="应用包名：" :required="link_form.os_type === 1" prop="pkg_name">
-          <el-input class="adv-link-item" v-model="link_form.pkg_name" placeholder="请输入应用包名"/>
+        <el-form-item label="应用包名：" prop="pkg_name">
+          <el-input class="adv-link-item" v-model="link_form.pkg_name" placeholder="选填"/>
         </el-form-item>
         <el-form-item label="链接标识：" prop="link_code">
           <el-input class="adv-link-item" v-model="link_form.link_code" placeholder="请输入链接标识"/>
@@ -187,21 +187,6 @@
     name: "AdLink",
 
     data() {
-      // 自定义校验函数
-      const validatePkgName = (rule, value, callback) => {
-        if (this.link_form.os_type === 1) {
-          // 安卓系统时，包名为必填
-          if (!value) {
-            callback(new Error('请输入应用包名'))
-          } else {
-            callback()
-          }
-        } else {
-          // IOS系统时，包名可选
-          callback()
-        }
-      }
-
       return {
         // 保存滚动位置
         savedScrollTop: 0,
@@ -224,7 +209,7 @@
         submitLoading: false,
         link_form: {
           channel_code: '',
-          os_type: 0,
+          os_type: 1,
           app_name: '',
           pkg_name: '',
           link_code: '',
@@ -243,9 +228,6 @@
           app_name: [
             {required: true, message: '请输入应用名称', trigger: 'blur'}
           ],
-          pkg_name: [
-            {validator: validatePkgName, trigger: 'blur'}  // 使用自定义校验
-          ],
           download_link: [
             {type: 'url', message: '请输入正确的URL地址', trigger: 'blur'}
           ],
@@ -260,17 +242,6 @@
     },
     components: {
       // 'viewer': Viewer
-    },
-    watch: {
-      // 监听系统类型变化，重新校验包名字段
-      'link_form.os_type'() {
-        this.$nextTick(() => {
-          if (this.$refs.formRef) {
-            // 切换系统类型时，重新校验包名字段
-            this.$refs.formRef.clearValidate('pkg_name')
-          }
-        })
-      }
     },
     methods: {
       startEdit(row) {
