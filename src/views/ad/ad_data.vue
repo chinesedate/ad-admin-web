@@ -82,6 +82,22 @@
               </el-option>
             </el-select>
           </el-form-item>
+          <el-form-item class="pick-form-item" label="转化查询">
+            <el-select
+              v-model="self_action_value"
+              filterable
+              multiple
+              collapse-tags
+              @change="handleAdDataPickChange"
+              placeholder="请选择">
+              <el-option
+                v-for="item in self_action_options"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value">
+              </el-option>
+            </el-select>
+          </el-form-item>
           <el-form-item class="pick-form-item" label="日期">
             <el-date-picker
               v-model="date_list"
@@ -208,6 +224,14 @@
             label="转化类型">
           </el-table-column>
           <el-table-column
+            v-if="visibleColumnProps.includes('self_action')"
+            prop="self_action"
+            label="内部行为">
+            <template #default="scope">
+              {{ selfActionLabel(scope.row.self_action) }}
+            </template>
+          </el-table-column>
+          <el-table-column
             v-if="visibleColumnProps.includes('ad_num')"
             prop="ad_num"
             label="数量">
@@ -238,7 +262,7 @@
   import {pageListAdData, fetchAdDataPickInfo, exportAdData} from "@/api/ad-data";
 
   const STORAGE_KEY = 'ad_data_table_columns';
-  const CALLBACK_PRESET = ['ad_day', 'ad_hour', 'ad_status', 'app_id', 'customer_id', 'app_name', 'action_type', 'ad_num'];
+  const CALLBACK_PRESET = ['ad_day', 'ad_hour', 'ad_status', 'app_id', 'customer_id', 'app_name', 'action_type', 'self_action', 'ad_num'];
   const MONITOR_PRESET = ['ad_day', 'ad_hour', 'ad_status', 'customer_id', 'app_id', 'app_name', 'ad_num'];
   const ALL_COLUMNS = [
     {prop: 'ad_day', label: '日期'},
@@ -251,6 +275,7 @@
     {prop: 'app_name', label: '应用名称'},
     {prop: 'source_action_type', label: '原始类型'},
     {prop: 'action_type', label: '转化类型'},
+    {prop: 'self_action', label: '内部行为'},
     {prop: 'ad_num', label: '数量'},
     {prop: 'conversion_rate', label: '回调率'},
   ];
@@ -362,6 +387,17 @@
         customer_id_value: [],
         app_id_options: [],
         app_id_value: [],
+        self_action_value: [],
+        self_action_options: [
+          {value: 1, label: '激活'},
+          {value: 2, label: '注册'},
+          {value: 3, label: '付费'},
+          {value: 4, label: '下单'},
+          {value: 5, label: '次留'},
+          {value: 8, label: '关键行为'},
+          {value: 9, label: '拉活'},
+          {value: 0, label: '未知'}
+        ],
         time_type: -2,
         time_options: [{value: -2, label: '全天'}, {value: -1, label: '分小时'}],
         showColumnSelector: false,
@@ -371,6 +407,10 @@
       // 'viewer': Viewer
     },
     methods: {
+      selfActionLabel(value) {
+        const labels = {0: '未知', 1: '激活', 2: '注册', 3: '付费', 4: '下单', 5: '次留', 8: '关键行为', 9: '拉活'}
+        return labels[Number(value)] || '未知'
+      },
       tableRowClassName({row}) {
         // 给部分行添加颜色区别
         let row_class_name = ''
@@ -531,6 +571,7 @@
           customer_id_list: this.customer_id_value,
           app_id_list: this.app_id_value,
           ad_status_list: this.ad_status_value,
+          self_action_list: this.self_action_value,
           time_type: this.time_type
         }
         if (this.ad_type_value !== '') {
@@ -589,6 +630,7 @@
           channel_id_list: this.channel_id_value,
           customer_id_list: this.customer_id_value,
           app_id_list: this.app_id_value,
+          self_action_list: this.self_action_value,
           time_type: this.time_type
         }
         if (this.ad_type_value !== '') {

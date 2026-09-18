@@ -50,6 +50,11 @@
           </el-table-column>
           <el-table-column prop="action_type" label="转化类型" min-width="160" show-overflow-tooltip/>
           <el-table-column prop="action_name" label="转化名称" min-width="140" show-overflow-tooltip/>
+          <el-table-column prop="self_action" label="内部行为" min-width="100" align="center">
+            <template #default="scope">
+              {{ selfActionLabel(scope.row.self_action) }}
+            </template>
+          </el-table-column>
           <el-table-column prop="create_time" label="添加时间" min-width="150" show-overflow-tooltip/>
           <el-table-column prop="update_time" label="修改时间" min-width="150" show-overflow-tooltip>
             <template #default="scope">
@@ -117,6 +122,15 @@
         <el-form-item label="转化名称：" prop="action_name">
           <el-input v-model="form.action_name" maxlength="100" placeholder="请输入转化名称"/>
         </el-form-item>
+        <el-form-item label="内部行为：" prop="self_action">
+          <el-select v-model="form.self_action" placeholder="请选择内部行为" style="width: 100%">
+            <el-option
+              v-for="item in selfActionOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"/>
+          </el-select>
+        </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
         <el-button @click="closeDialog">取消</el-button>
@@ -146,6 +160,16 @@
         filter_up_down_type: null,
         tableData: [],
         channel_code_options: [],
+        selfActionOptions: [
+          {value: 0, label: '未知'},
+          {value: 1, label: '激活'},
+          {value: 2, label: '注册'},
+          {value: 3, label: '付费'},
+          {value: 4, label: '下单'},
+          {value: 5, label: '次日留存'},
+          {value: 8, label: '关键行为'},
+          {value: 9, label: '拉活'}
+        ],
         dialogVisible: false,
         isEdit: false,
         submitLoading: false,
@@ -154,13 +178,15 @@
           channel_code: '',
           up_down_type: 0,
           action_type: '',
-          action_name: ''
+          action_name: '',
+          self_action: 0
         },
         rules: {
           channel_code: [{required: true, message: '请选择渠道标识', trigger: 'change'}],
           up_down_type: [{required: true, message: '请选择类型', trigger: 'change'}],
           action_type: [{required: true, message: '请输入转化类型', trigger: 'blur'}],
-          action_name: [{required: true, message: '请输入转化名称', trigger: 'blur'}]
+          action_name: [{required: true, message: '请输入转化名称', trigger: 'blur'}],
+          self_action: [{required: true, message: '请选择内部行为', trigger: 'change'}]
         }
       }
     },
@@ -168,6 +194,10 @@
       this.listAdvChannelAction()
     },
     methods: {
+      selfActionLabel(value) {
+        const found = this.selfActionOptions.find(item => item.value === Number(value))
+        return found ? found.label : '未知'
+      },
       formatChannelOption(item) {
         if (item.channel_name && item.channel_name !== item.channel_code) {
           return `${item.channel_name} (${item.channel_code})`
@@ -208,7 +238,8 @@
           channel_code: (this.form.channel_code || '').trim(),
           up_down_type: Number(this.form.up_down_type),
           action_type: (this.form.action_type || '').trim(),
-          action_name: (this.form.action_name || '').trim()
+          action_name: (this.form.action_name || '').trim(),
+          self_action: Number(this.form.self_action)
         }
       },
       handleFilterChange() {
@@ -250,7 +281,8 @@
           channel_code: '',
           up_down_type: 0,
           action_type: '',
-          action_name: ''
+          action_name: '',
+          self_action: 0
         }
       },
       openAddDialog() {
@@ -269,7 +301,8 @@
           channel_code: channelCode,
           up_down_type: upDownType,
           action_type: row.action_type,
-          action_name: row.action_name
+          action_name: row.action_name,
+          self_action: row.self_action == null ? 0 : Number(row.self_action)
         }
         this.dialogVisible = true
         this.loadChannelCodeOptions(upDownType, true).then(() => {
