@@ -171,75 +171,11 @@
           :row-class-name="tableRowClassName"
           style="width: 100%">
           <el-table-column
-            v-if="visibleColumnProps.includes('ad_day')"
-            prop="ad_day"
-            label="日期"
-            width="180">
-          </el-table-column>
-          <el-table-column
-            v-if="visibleColumnProps.includes('ad_hour')"
-            prop="ad_hour"
-            label="时间"
-            width="180">
-          </el-table-column>
-          <el-table-column
-            v-if="visibleColumnProps.includes('ad_type')"
-            prop="ad_type"
-            label="数据类型">
-          </el-table-column>
-          <el-table-column
-            v-if="visibleColumnProps.includes('ad_status')"
-            prop="ad_status"
-            label="请求状态">
-          </el-table-column>
-          <el-table-column
-            v-if="visibleColumnProps.includes('channel_id')"
-            prop="channel_id"
-            label="渠道ID"
-            width="180">
-          </el-table-column>
-          <el-table-column
-            v-if="visibleColumnProps.includes('customer_id')"
-            prop="customer_id"
-            label="客户ID">
-          </el-table-column>
-          <el-table-column
-            v-if="visibleColumnProps.includes('app_id')"
-            prop="app_id"
-            label="应用ID">
-          </el-table-column>
-          <el-table-column
-            v-if="visibleColumnProps.includes('app_name')"
-            prop="app_name"
-            label="应用名称">
-          </el-table-column>
-          <el-table-column
-            v-if="visibleColumnProps.includes('source_action_type')"
-            prop="source_action_type"
-            label="原始类型">
-          </el-table-column>
-          <el-table-column
-            v-if="visibleColumnProps.includes('action_type')"
-            prop="action_type"
-            label="转化类型">
-          </el-table-column>
-          <el-table-column
-            v-if="visibleColumnProps.includes('self_action')"
-            prop="self_action"
-            label="内部行为">
-            <template #default="scope">
-              {{ selfActionLabel(scope.row.self_action) }}
-            </template>
-          </el-table-column>
-          <el-table-column
-            v-if="visibleColumnProps.includes('ad_num')"
-            prop="ad_num"
-            label="数量">
-          </el-table-column>
-          <el-table-column
-            v-if="visibleColumnProps.includes('conversion_rate')"
-            prop="conversion_rate"
-            label="回调率">
+            v-for="col in visibleColumns"
+            :key="col.prop"
+            :prop="col.prop"
+            :label="col.label"
+            :min-width="col.minWidth || 100">
           </el-table-column>
         </el-table>
         <div class="page-wrapper">
@@ -261,23 +197,56 @@
 <script>
   import {pageListAdData, fetchAdDataPickInfo, exportAdData} from "@/api/ad-data";
 
-  const STORAGE_KEY = 'ad_data_table_columns';
-  const CALLBACK_PRESET = ['ad_day', 'ad_hour', 'ad_status', 'app_id', 'customer_id', 'app_name', 'action_type', 'self_action', 'ad_num'];
-  const MONITOR_PRESET = ['ad_day', 'ad_hour', 'ad_status', 'customer_id', 'app_id', 'app_name', 'ad_num'];
+  const STORAGE_KEY = 'ad_data_table_columns_v3';
+  const CALLBACK_PRESET = [
+    'ad_day', 'ad_hour', 'link_name', 'budget_party', 'product_name', 'delivery_platform',
+    'channel_id', 'customer_id', 'app_id',
+    'click_success', 'click_fail',
+    'activate_success', 'activate_deduct', 'activate_fail',
+    'register_success', 'register_deduct', 'register_fail',
+    'pay_success', 'pay_deduct', 'pay_fail'
+  ];
+  const MONITOR_PRESET = [
+    'ad_day', 'ad_hour', 'link_name', 'budget_party', 'product_name', 'delivery_platform',
+    'channel_id', 'customer_id', 'app_id', 'click_success', 'click_fail'
+  ];
   const ALL_COLUMNS = [
-    {prop: 'ad_day', label: '日期'},
-    {prop: 'ad_hour', label: '时间'},
-    {prop: 'ad_type', label: '数据类型'},
-    {prop: 'ad_status', label: '请求状态'},
-    {prop: 'channel_id', label: '渠道ID'},
-    {prop: 'customer_id', label: '客户ID'},
-    {prop: 'app_id', label: '应用ID'},
-    {prop: 'app_name', label: '应用名称'},
-    {prop: 'source_action_type', label: '原始类型'},
-    {prop: 'action_type', label: '转化类型'},
-    {prop: 'self_action', label: '内部行为'},
-    {prop: 'ad_num', label: '数量'},
-    {prop: 'conversion_rate', label: '回调率'},
+    {prop: 'ad_day', label: '日期', minWidth: 110},
+    {prop: 'ad_hour', label: '时间', minWidth: 80},
+    {prop: 'link_name', label: '链接名称', minWidth: 120},
+    {prop: 'budget_party', label: '预算方', minWidth: 100},
+    {prop: 'product_name', label: '产品名称', minWidth: 120},
+    {prop: 'delivery_platform', label: '投放平台', minWidth: 100},
+    {prop: 'channel_id', label: '渠道ID', minWidth: 120},
+    {prop: 'customer_id', label: '客户ID', minWidth: 100},
+    {prop: 'app_id', label: '应用ID', minWidth: 100},
+    {prop: 'click_success', label: '点击成功', minWidth: 90},
+    {prop: 'click_fail', label: '点击失败', minWidth: 90},
+    {prop: 'activate_success', label: '激活成功', minWidth: 90},
+    {prop: 'activate_deduct', label: '激活扣量', minWidth: 90},
+    {prop: 'activate_fail', label: '激活失败', minWidth: 90},
+    {prop: 'register_success', label: '注册成功', minWidth: 90},
+    {prop: 'register_deduct', label: '注册扣量', minWidth: 90},
+    {prop: 'register_fail', label: '注册失败', minWidth: 90},
+    {prop: 'pay_success', label: '付费成功', minWidth: 90},
+    {prop: 'pay_deduct', label: '付费扣量', minWidth: 90},
+    {prop: 'pay_fail', label: '付费失败', minWidth: 90},
+    {prop: 'order_success', label: '下单成功', minWidth: 90},
+    {prop: 'order_deduct', label: '下单扣量', minWidth: 90},
+    {prop: 'order_fail', label: '下单失败', minWidth: 90},
+    {prop: 'retain_success', label: '次留成功', minWidth: 90},
+    {prop: 'retain_deduct', label: '次留扣量', minWidth: 90},
+    {prop: 'retain_fail', label: '次留失败', minWidth: 90},
+    {prop: 'key_action_success', label: '关键行为成功', minWidth: 110},
+    {prop: 'key_action_deduct', label: '关键行为扣量', minWidth: 110},
+    {prop: 'key_action_fail', label: '关键行为失败', minWidth: 110},
+    {prop: 'recall_success', label: '拉活成功', minWidth: 90},
+    {prop: 'recall_deduct', label: '拉活扣量', minWidth: 90},
+    {prop: 'recall_fail', label: '拉活失败', minWidth: 90},
+    {prop: 'unknown_success', label: '未知成功', minWidth: 90},
+    {prop: 'unknown_deduct', label: '未知扣量', minWidth: 90},
+    {prop: 'unknown_fail', label: '未知失败', minWidth: 90},
+    {prop: 'conversion_rate', label: '回调率', minWidth: 100},
   ];
 
   export default {
@@ -407,10 +376,6 @@
       // 'viewer': Viewer
     },
     methods: {
-      selfActionLabel(value) {
-        const labels = {0: '未知', 1: '激活', 2: '注册', 3: '付费', 4: '下单', 5: '次留', 8: '关键行为', 9: '拉活'}
-        return labels[Number(value)] || '未知'
-      },
       tableRowClassName({row}) {
         // 给部分行添加颜色区别
         let row_class_name = ''
@@ -425,14 +390,17 @@
           try {
             const parsed = JSON.parse(saved);
             if (Array.isArray(parsed) && parsed.length > 0) {
-              this.visibleColumnProps = parsed;
-              return;
+              const validProps = new Set(ALL_COLUMNS.map(col => col.prop));
+              const filtered = parsed.filter(prop => validProps.has(prop));
+              if (filtered.length > 0) {
+                this.visibleColumnProps = filtered;
+                return;
+              }
             }
           } catch (e) {/* ignore */
           }
         }
-        // 默认全部显示
-        this.visibleColumnProps = ALL_COLUMNS.map(col => col.prop);
+        this.visibleColumnProps = [...CALLBACK_PRESET];
       },
       saveColumnVisibility() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(this.visibleColumnProps));
@@ -588,27 +556,18 @@
               let is_new = true;
               let row_key = "";
               for (let rowData of this.tableData) {
-                let current_row_key = rowData.ad_type + "_" + rowData.ad_hour + "_" + rowData.channel_id + "_" + rowData.customer_id + "_" + rowData.app_id + "_" + rowData.action_type;
+                let current_row_key = rowData.ad_day + "_" + rowData.ad_hour + "_" + rowData.channel_id + "_" + rowData.customer_id + "_" + rowData.app_id;
                 if (row_key === current_row_key) {
                   rowData.data_new = is_new;
                 } else {
                   is_new = !is_new
                   rowData.data_new = is_new;
                 }
-                rowData.key_id = rowData.ad_day + "_" + rowData.ad_hour + "_" + rowData.ad_type + "_" + rowData.ad_status + "_" + rowData.channel_id + "_" + rowData.customer_id + "_" + rowData.app_id + "_" + rowData.source_action_type + "_" + rowData.action_type;
-
+                rowData.key_id = current_row_key;
                 row_key = current_row_key;
-                // console.log(rowData.data_new)
               }
               this.total = res.data.data.total;
               this.hasNext = res.data.data.hasNext;
-              // // 数据切换后立即刷新表格
-              // this.$nextTick(() => {
-              //   this.$refs.adDataTable.doLayout && this.$refs.adDataTable.doLayout()
-              // });
-              // this.$nextTick(() => {
-              //   this.$forceUpdate()
-              // })
             }
           }
         );
@@ -652,6 +611,10 @@
       },
       columnList() {
         return ALL_COLUMNS;
+      },
+      visibleColumns() {
+        const selected = new Set(this.visibleColumnProps);
+        return ALL_COLUMNS.filter(col => selected.has(col.prop));
       }
     },
     created() {
