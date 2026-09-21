@@ -164,10 +164,13 @@
             </el-checkbox-group>
           </div>
         </div>
+        <div v-if="customer_id_value.length || app_id_value.length" class="column-hint">已按所选客户或应用只显示有数据的列</div>
         <el-table
           :data="tableData"
           ref="adDataTable"
           row-key="key_id"
+          show-summary
+          :summary-method="summarizeTable"
           :row-class-name="tableRowClassName"
           style="width: 100%">
           <el-table-column
@@ -197,7 +200,20 @@
 <script>
   import {pageListAdData, fetchAdDataPickInfo, exportAdData} from "@/api/ad-data";
 
-  const STORAGE_KEY = 'ad_data_table_columns_v3';
+  const STORAGE_KEY = 'ad_data_table_columns_v4';
+  const DEFAULT_COLUMNS = [
+    'ad_day', 'ad_hour', 'link_name', 'budget_party', 'product_name', 'delivery_platform',
+    'channel_id', 'customer_id', 'app_id',
+    'show_success', 'show_fail',
+    'click_success',
+    'activate_success', 'activate_fail',
+    'register_success',
+    'pay_success',
+    'order_success',
+    'retain_success',
+    'recall_success', 'recall_fail',
+    'conversion_rate'
+  ];
   const CALLBACK_PRESET = [
     'ad_day', 'ad_hour', 'link_name', 'budget_party', 'product_name', 'delivery_platform',
     'channel_id', 'customer_id', 'app_id',
@@ -208,7 +224,8 @@
   ];
   const MONITOR_PRESET = [
     'ad_day', 'ad_hour', 'link_name', 'budget_party', 'product_name', 'delivery_platform',
-    'channel_id', 'customer_id', 'app_id', 'click_success', 'click_fail'
+    'channel_id', 'customer_id', 'app_id',
+    'show_success', 'show_fail', 'click_success', 'click_fail'
   ];
   const ALL_COLUMNS = [
     {prop: 'ad_day', label: '日期', minWidth: 110},
@@ -220,6 +237,8 @@
     {prop: 'channel_id', label: '渠道ID', minWidth: 120},
     {prop: 'customer_id', label: '客户ID', minWidth: 100},
     {prop: 'app_id', label: '应用ID', minWidth: 100},
+    {prop: 'show_success', label: '曝光成功', minWidth: 90},
+    {prop: 'show_fail', label: '曝光失败', minWidth: 90},
     {prop: 'click_success', label: '点击成功', minWidth: 90},
     {prop: 'click_fail', label: '点击失败', minWidth: 90},
     {prop: 'activate_success', label: '激活成功', minWidth: 90},
@@ -248,6 +267,9 @@
     {prop: 'unknown_fail', label: '未知失败', minWidth: 90},
     {prop: 'conversion_rate', label: '回调率', minWidth: 100},
   ];
+  const METRIC_PROPS = new Set(ALL_COLUMNS.map(col => col.prop).filter(prop =>
+    prop === 'conversion_rate' || prop.endsWith('_success') || prop.endsWith('_deduct') || prop.endsWith('_fail')
+  ));
 
   export default {
     name: "ad_data",
@@ -370,12 +392,29 @@
         time_type: -2,
         time_options: [{value: -2, label: '全天'}, {value: -1, label: '分小时'}],
         showColumnSelector: false,
+        // 选了客户ID时，接口返回本次查询里有数的行为列；null 表示不收列
+        activeMetricProps: null,
+        tableSummary: {},
       }
     },
     components: {
       // 'viewer': Viewer
     },
     methods: {
+      summarizeTable({columns}) {
+        const summary = this.tableSummary || {};
+        return columns.map((col, index) => {
+          if (index === 0) {
+            return '汇总';
+          }
+          const prop = col.property;
+          if (!prop || prop === 'conversion_rate' || !METRIC_PROPS.has(prop)) {
+            return '';
+          }
+          const value = summary[prop];
+          return value === undefined || value === null ? '' : value;
+        });
+      },
       tableRowClassName({row}) {
         // 给部分行添加颜色区别
         let row_class_name = ''
@@ -393,14 +432,23 @@
               const validProps = new Set(ALL_COLUMNS.map(col => col.prop));
               const filtered = parsed.filter(prop => validProps.has(prop));
               if (filtered.length > 0) {
+                if (filtered.indexOf('show_success') === -1) {
+                  const clickIndex = filtered.indexOf('click_success');
+                  if (clickIndex >= 0) {
+                    filtered.splice(clickIndex, 0, 'show_success');
+                  } else {
+                    filtered.push('show_success');
+                  }
+                }
                 this.visibleColumnProps = filtered;
+                this.saveColumnVisibility();
                 return;
               }
             }
           } catch (e) {/* ignore */
           }
         }
-        this.visibleColumnProps = [...CALLBACK_PRESET];
+        this.visibleColumnProps = [...DEFAULT_COLUMNS];
       },
       saveColumnVisibility() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(this.visibleColumnProps));
@@ -553,6 +601,10 @@
         ).then(res => {
             if (res.data.data != null) {
               this.tableData = res.data.data.list;
+              this.tableSummary = res.data.data.summary || {};
+              this.activeMetricProps = (this.customer_id_value.length || this.app_id_value.length)
+                ? (res.data.data.active_metric_props || [])
+                : null;
               let is_new = true;
               let row_key = "";
               for (let rowData of this.tableData) {
@@ -568,6 +620,9 @@
               }
               this.total = res.data.data.total;
               this.hasNext = res.data.data.hasNext;
+              this.$nextTick(() => {
+                this.$refs.adDataTable && this.$refs.adDataTable.doLayout();
+              });
             }
           }
         );
@@ -614,7 +669,13 @@
       },
       visibleColumns() {
         const selected = new Set(this.visibleColumnProps);
-        return ALL_COLUMNS.filter(col => selected.has(col.prop));
+        const active = this.activeMetricProps;
+        return ALL_COLUMNS.filter(col => {
+          if (active && METRIC_PROPS.has(col.prop)) {
+            return active.indexOf(col.prop) !== -1;
+          }
+          return selected.has(col.prop);
+        });
       }
     },
     created() {
@@ -673,6 +734,12 @@
     width: 100%;
     display: flex;
     justify-content: center;
+  }
+
+  .column-hint {
+    padding: 0 10px 8px;
+    color: #909399;
+    font-size: 13px;
   }
 
   .pick-form-inline {
