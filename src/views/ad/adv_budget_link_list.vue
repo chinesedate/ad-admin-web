@@ -143,12 +143,23 @@
             <el-radio :label="2">注册</el-radio>
           </el-radio-group>
         </el-form-item>
+        <el-form-item
+          v-if="form.channel_code === 'bohai'"
+          label="监测码："
+          prop="bohai_pack_id">
+          <el-input
+            v-model="form.bohai_pack_id"
+            maxlength="200"
+            placeholder="请输入博海 packId"
+            @input="syncBohaiClickLink"/>
+        </el-form-item>
         <el-form-item label="点击链接：" prop="click_link">
           <el-input
             v-model="form.click_link"
             maxlength="4000"
             type="textarea"
             :rows="2"
+            :readonly="form.channel_code === 'bohai'"
             :placeholder="clickLinkPlaceholder"/>
         </el-form-item>
         <el-form-item label="曝光链接：" prop="show_link">
@@ -224,7 +235,8 @@
           show_link: '',
           extra_info: '',
           param_values: [],
-          wanmob_event_type: 1
+          wanmob_event_type: 1,
+          bohai_pack_id: ''
         },
         rules: {
           channel_code: [{required: true, message: '请选择广告主', trigger: 'change'}],
@@ -239,6 +251,16 @@
               callback()
             },
             trigger: 'change'
+          }],
+          bohai_pack_id: [{
+            validator: (rule, value, callback) => {
+              if (this.form.channel_code === 'bohai' && !(value || '').trim()) {
+                callback(new Error('请输入监测码 packId'))
+                return
+              }
+              callback()
+            },
+            trigger: 'blur'
           }]
         }
       }
@@ -272,13 +294,18 @@
           heimi: '不填则按 channel_pkg 或 did',
           doujing: '不填则按 djMtId 或 djMtId__djPt',
           chengtou: '不填则按 offer_id__aff_id__ads_code',
-          wanmob: '不填则按 product_id'
+          wanmob: '不填则按 product_id',
+          bohai: '不填则按 packId',
+          funmob: '不填则按 channelId__sign'
         }
         return placeholders[this.form.channel_code] || '选填'
       },
       clickLinkPlaceholder() {
         if (this.form.channel_code === 'wanmob') {
           return '粘贴 WanMob 官方监测链接即可，转化类型由上方选项决定，保存时自动拼接 event_type'
+        }
+        if (this.form.channel_code === 'bohai') {
+          return '由上方 packId 自动生成（仅用于解析入库，实际上报为 POST JSON）'
         }
         return '保存后将按预算媒体中配置的链接参数校验并解析'
       }
@@ -294,6 +321,9 @@
         const required = Number(item.param_required) === 0
         if (this.form.channel_code === 'wanmob' && name === 'event_type') {
           return 'event_type（保存时按转化类型自动拼接）'
+        }
+        if (this.form.channel_code === 'bohai' && name === 'packId') {
+          return 'packId（由上方监测码自动拼接）'
         }
         return `${name}${required ? '（必填）' : ''}`
       },
@@ -311,6 +341,38 @@
           return {url: raw, eventType: ''}
         }
       },
+      buildBohaiClickLink(packId) {
+        const id = (packId || '').trim()
+        if (!id) {
+          return ''
+        }
+        return `https://ad.bohaiadx.com/cad/report?packId=${encodeURIComponent(id)}`
+      },
+      extractBohaiPackId(clickLink, paramValues) {
+        const fromParam = ((paramValues || []).find(item => item.param_name === 'packId') || {}).param_value
+        if (fromParam) {
+          return String(fromParam).trim()
+        }
+        const raw = (clickLink || '').trim()
+        if (!raw) {
+          return ''
+        }
+        try {
+          const parsed = new URL(raw)
+          return (parsed.searchParams.get('packId')
+            || parsed.searchParams.get('pack_id')
+            || parsed.searchParams.get('rz_app_id')
+            || '').trim()
+        } catch (e) {
+          return ''
+        }
+      },
+      syncBohaiClickLink() {
+        if (this.form.channel_code !== 'bohai') {
+          return
+        }
+        this.form.click_link = this.buildBohaiClickLink(this.form.bohai_pack_id)
+      },
       resolveWanmobFormFields(data) {
         let clickLink = data.click_link || ''
         let wanmobEventType = 1
@@ -323,6 +385,13 @@
         const eventType = paramEventType || stripped.eventType
         wanmobEventType = Number(eventType) === 2 ? 2 : 1
         return {clickLink, wanmobEventType}
+      },
+      resolveBohaiFormFields(data) {
+        const packId = this.extractBohaiPackId(data.click_link, data.param_values)
+        return {
+          bohaiPackId: packId,
+          clickLink: packId ? this.buildBohaiClickLink(packId) : (data.click_link || '')
+        }
       },
       formatOsType(value) {
         if (Number(value) === 0) {
@@ -404,7 +473,8 @@
           show_link: '',
           extra_info: '',
           param_values: [],
-          wanmob_event_type: 1
+          wanmob_event_type: 1,
+          bohai_pack_id: ''
         }
         this.linkParamHint = []
       },
@@ -425,6 +495,14 @@
         if (channelCode === 'wanmob' && this.form.wanmob_event_type !== 1 && this.form.wanmob_event_type !== 2) {
           this.form.wanmob_event_type = 1
         }
+        if (channelCode === 'bohai') {
+          if (!this.form.bohai_pack_id) {
+            this.form.bohai_pack_id = this.extractBohaiPackId(this.form.click_link, this.form.param_values)
+          }
+          this.syncBohaiClickLink()
+        } else {
+          this.form.bohai_pack_id = ''
+        }
       },
       openAddDialog() {
         this.isEdit = false
@@ -441,6 +519,8 @@
         getAdvLink(row.id).then(res => {
           const data = res.data.data || {}
           const wanmobFields = this.resolveWanmobFormFields(data)
+          const bohaiFields = this.resolveBohaiFormFields(data)
+          const isBohai = data.channel_code === 'bohai'
           this.form = {
             id: data.id,
             channel_code: data.channel_code,
@@ -449,11 +529,12 @@
             pkg_name: data.pkg_name || '',
             link_code: data.link_code || '',
             download_link: data.download_link || '',
-            click_link: wanmobFields.clickLink,
+            click_link: isBohai ? bohaiFields.clickLink : wanmobFields.clickLink,
             show_link: data.show_link || '',
             extra_info: data.extra_info || '',
             param_values: data.param_values || [],
-            wanmob_event_type: wanmobFields.wanmobEventType
+            wanmob_event_type: wanmobFields.wanmobEventType,
+            bohai_pack_id: isBohai ? bohaiFields.bohaiPackId : ''
           }
           this.loadLinkParamHint(data.channel_code)
           this.dialogVisible = true
@@ -474,6 +555,9 @@
         }
       },
       buildSubmitPayload() {
+        if (this.form.channel_code === 'bohai') {
+          this.syncBohaiClickLink()
+        }
         const payload = {
           id: this.form.id,
           channel_code: this.form.channel_code,
