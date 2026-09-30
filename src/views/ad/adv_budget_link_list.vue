@@ -128,8 +128,11 @@
         <el-form-item label="应用包名：" prop="pkg_name">
           <el-input v-model="form.pkg_name" maxlength="100" placeholder="选填"/>
         </el-form-item>
-        <el-form-item label="链接标识：" prop="link_code">
-          <el-input v-model="form.link_code" maxlength="500" :placeholder="linkCodePlaceholder"/>
+        <el-form-item :label="linkCodeLabel" prop="link_code">
+          <el-input v-model="form.link_code" maxlength="500" :placeholder="linkCodePlaceholder" @input="syncMeituanMonitor"/>
+        </el-form-item>
+        <el-form-item v-if="form.channel_code === 'junbo'" label="adId：" prop="junbo_ad_id">
+          <el-input v-model="form.junbo_ad_id" maxlength="100" placeholder="请输入预算 adId，点击上报写入骏伯 adId"/>
         </el-form-item>
         <el-form-item label="下载链接：" prop="download_link">
           <el-input v-model="form.download_link" maxlength="2000" placeholder="选填"/>
@@ -159,11 +162,19 @@
             maxlength="4000"
             type="textarea"
             :rows="2"
-            :readonly="form.channel_code === 'bohai'"
-            :placeholder="clickLinkPlaceholder"/>
+            :readonly="form.channel_code === 'bohai' || form.channel_code === 'meituan'"
+            :placeholder="clickLinkPlaceholder"
+            @input="syncDerivedLinkCode"/>
         </el-form-item>
         <el-form-item label="曝光链接：" prop="show_link">
-          <el-input v-model="form.show_link" maxlength="4000" type="textarea" :rows="2" placeholder="选填"/>
+          <el-input
+            v-model="form.show_link"
+            maxlength="4000"
+            type="textarea"
+            :rows="2"
+            :readonly="form.channel_code === 'meituan'"
+            :placeholder="showLinkPlaceholder"
+            @input="syncDerivedLinkCode"/>
         </el-form-item>
         <el-form-item label="备注：" prop="extra_info">
           <el-input v-model="form.extra_info" type="textarea" :rows="2" maxlength="2000" placeholder="选填"/>
@@ -236,7 +247,8 @@
           extra_info: '',
           param_values: [],
           wanmob_event_type: 1,
-          bohai_pack_id: ''
+          bohai_pack_id: '',
+          junbo_ad_id: ''
         },
         rules: {
           channel_code: [{required: true, message: '请选择广告主', trigger: 'change'}],
@@ -256,6 +268,30 @@
             validator: (rule, value, callback) => {
               if (this.form.channel_code === 'bohai' && !(value || '').trim()) {
                 callback(new Error('请输入监测码 packId'))
+                return
+              }
+              callback()
+            },
+            trigger: 'blur'
+          }],
+          link_code: [{
+            validator: (rule, value, callback) => {
+              if (this.form.channel_code === 'junbo' && !(value || '').trim()) {
+                callback(new Error('请输入渠道ID'))
+                return
+              }
+              if (this.form.channel_code === 'meituan' && !(value || '').trim()) {
+                callback(new Error('请输入渠道号'))
+                return
+              }
+              callback()
+            },
+            trigger: 'blur'
+          }],
+          junbo_ad_id: [{
+            validator: (rule, value, callback) => {
+              if (this.form.channel_code === 'junbo' && !(value || '').trim()) {
+                callback(new Error('请输入adId'))
                 return
               }
               callback()
@@ -287,7 +323,22 @@
         }
         return this.add_adv_channel_code_list
       },
+      linkCodeLabel() {
+        if (this.form.channel_code === 'junbo') {
+          return '渠道ID：'
+        }
+        if (this.form.channel_code === 'meituan') {
+          return '渠道号：'
+        }
+        return '链接标识：'
+      },
       linkCodePlaceholder() {
+        if (this.form.channel_code === 'junbo') {
+          return '请输入渠道ID，将作为链接标识'
+        }
+        if (this.form.channel_code === 'meituan') {
+          return '请输入渠道号，将作为链接标识'
+        }
         const placeholders = {
           inteyun: '不填则按 adId__channelId',
           zhijie: '不填则按 ckey',
@@ -296,7 +347,25 @@
           chengtou: '不填则按 offer_id__aff_id__ads_code',
           wanmob: '不填则按 product_id',
           bohai: '不填则按 packId',
-          funmob: '不填则按 channelId__sign'
+          funmob: '不填则按 channelId__sign',
+          ningzhi: '不填则按点击链接 yyq',
+          soul: '不填则按点击链接路径末段数字',
+          jinling: '不填则按点击链接路径末段数字',
+          taqu: '不填则按 tq_gid_tq_pid',
+          tianyuemeng: '不填则按 aid_did',
+          zhongshi: '不填则按 aid_did',
+          tubi: '不填则按点击链接 /ad/code/ 后的整段',
+          vip: '不填则按曝光链接 monitor_spot_code',
+          xiaohongshu: '不填则按点击链接 xhs_channel',
+          xuanyi: '不填则按点击链接 pid',
+          xuchao2: '不填则按点击链接 offer_id',
+          yanxin: '不填则按点击链接 fid',
+          keshuo2: '不填则按点击链接 channel_id',
+          xuri: '不填则按点击链接 channel',
+          youdao: '不填则按点击链接 aid',
+          yoyo: '不填则按点击链接 dispatchCenterId',
+          yunwap: '不填则按点击链接 channel',
+          yunxunzhida: '不填则按点击链接 dispatch_item_id'
         }
         return placeholders[this.form.channel_code] || '选填'
       },
@@ -307,7 +376,16 @@
         if (this.form.channel_code === 'bohai') {
           return '由上方 packId 自动生成（仅用于解析入库，实际上报为 POST JSON）'
         }
+        if (this.form.channel_code === 'meituan') {
+          return '由渠道号自动生成'
+        }
         return '保存后将按预算媒体中配置的链接参数校验并解析'
+      },
+      showLinkPlaceholder() {
+        if (this.form.channel_code === 'meituan') {
+          return '由渠道号自动生成'
+        }
+        return '选填'
       }
     },
     mounted() {
@@ -372,6 +450,318 @@
           return
         }
         this.form.click_link = this.buildBohaiClickLink(this.form.bohai_pack_id)
+      },
+      buildMeituanMonitorUrls(channelNo) {
+        const source = encodeURIComponent((channelNo || '').trim())
+        if (!source) {
+          return {clickLink: '', showLink: ''}
+        }
+        return {
+          clickLink: `https://apimobile.meituan.com/prom/v2/verify?source=${source}&app=group&coderesp=true&mt_channel=meituanunion`,
+          showLink: `https://apimobile.meituan.com/prom/v2/action_monitor?source=${source}&app=group&monitor_type=impression&mt_channel=meituanunion`
+        }
+      },
+      syncMeituanMonitor() {
+        if (this.form.channel_code !== 'meituan') {
+          return
+        }
+        const urls = this.buildMeituanMonitorUrls(this.form.link_code)
+        this.form.click_link = urls.clickLink
+        this.form.show_link = urls.showLink
+      },
+      extractQueryParam(rawUrl, name) {
+        const raw = (rawUrl || '').trim()
+        if (!raw) {
+          return ''
+        }
+        try {
+          return (new URL(raw).searchParams.get(name) || '').trim()
+        } catch (e) {
+          const matched = raw.match(new RegExp('[?&]' + name + '=([^&]*)'))
+          return matched ? decodeURIComponent(matched[1] || '').trim() : ''
+        }
+      },
+      syncNingzhiLinkCode() {
+        if (this.form.channel_code !== 'ningzhi') {
+          return
+        }
+        if ((this.form.link_code || '').trim()) {
+          return
+        }
+        const yyq = this.extractQueryParam(this.form.click_link, 'yyq')
+          || this.extractQueryParam(this.form.show_link, 'yyq')
+        if (!yyq || (yyq.startsWith('__') && yyq.endsWith('__'))) {
+          return
+        }
+        this.form.link_code = yyq
+      },
+      extractPathId(rawUrl) {
+        const raw = (rawUrl || '').trim()
+        if (!raw) {
+          return ''
+        }
+        let path = ''
+        try {
+          path = new URL(raw).pathname || ''
+        } catch (e) {
+          path = raw.split('?')[0]
+        }
+        const segment = path.replace(/\/+$/, '').split('/').pop() || ''
+        return /^\d+$/.test(segment) ? segment : ''
+      },
+      syncSoulLinkCode() {
+        if (this.form.channel_code !== 'soul' && this.form.channel_code !== 'jinling') {
+          return
+        }
+        if ((this.form.link_code || '').trim()) {
+          return
+        }
+        const pathId = this.extractPathId(this.form.click_link)
+        if (!pathId) {
+          return
+        }
+        this.form.link_code = pathId
+      },
+      syncTaquLinkCode() {
+        if (this.form.channel_code !== 'taqu') {
+          return
+        }
+        if ((this.form.link_code || '').trim()) {
+          return
+        }
+        const tqGid = this.extractQueryParam(this.form.click_link, 'tq_gid')
+        const tqPid = this.extractQueryParam(this.form.click_link, 'tq_pid')
+        if (!tqGid || !tqPid) {
+          return
+        }
+        if ([tqGid, tqPid].some(item => item.startsWith('__') && item.endsWith('__'))) {
+          return
+        }
+        this.form.link_code = tqGid + '_' + tqPid
+      },
+      syncTianyuemengLinkCode() {
+        if (this.form.channel_code !== 'tianyuemeng') {
+          return
+        }
+        if ((this.form.link_code || '').trim()) {
+          return
+        }
+        const aid = this.extractQueryParam(this.form.click_link, 'aid')
+        const did = this.extractQueryParam(this.form.click_link, 'did')
+        if (!aid || !did) {
+          return
+        }
+        if ([aid, did].some(item => item.startsWith('__') && item.endsWith('__'))) {
+          return
+        }
+        this.form.link_code = aid + '_' + did
+      },
+      syncZhongshiLinkCode() {
+        if (this.form.channel_code !== 'zhongshi') {
+          return
+        }
+        if ((this.form.link_code || '').trim()) {
+          return
+        }
+        const aid = this.extractQueryParam(this.form.click_link, 'aid')
+        const did = this.extractQueryParam(this.form.click_link, 'did')
+        if (!aid || !did) {
+          return
+        }
+        if ([aid, did].some(item => this.isLinkMacro(item))) {
+          return
+        }
+        this.form.link_code = aid + '_' + did
+      },
+      syncTubiLinkCode() {
+        if (this.form.channel_code !== 'tubi') {
+          return
+        }
+        if ((this.form.link_code || '').trim()) {
+          return
+        }
+        const link = this.form.click_link || ''
+        const matched = link.match(/\/ad\/code\/([^/?#]+)/i)
+        if (!matched) {
+          return
+        }
+        const segment = decodeURIComponent(matched[1]).replace(/\/+$/, '')
+        if (!segment || (segment.startsWith('__') && segment.endsWith('__'))) {
+          return
+        }
+        this.form.link_code = segment
+      },
+      syncVipLinkCode() {
+        if (this.form.channel_code !== 'vip') {
+          return
+        }
+        if ((this.form.link_code || '').trim()) {
+          return
+        }
+        const spot = this.extractQueryParam(this.form.show_link, 'monitor_spot_code')
+        if (!spot || (spot.startsWith('__') && spot.endsWith('__'))) {
+          return
+        }
+        this.form.link_code = spot
+      },
+      syncXiaohongshuLinkCode() {
+        if (this.form.channel_code !== 'xiaohongshu') {
+          return
+        }
+        if ((this.form.link_code || '').trim()) {
+          return
+        }
+        const xhsChannel = this.extractQueryParam(this.form.click_link, 'xhs_channel')
+        if (!xhsChannel || (xhsChannel.startsWith('__') && xhsChannel.endsWith('__'))) {
+          return
+        }
+        this.form.link_code = xhsChannel
+      },
+      syncXuanyiLinkCode() {
+        if (this.form.channel_code !== 'xuanyi') {
+          return
+        }
+        if ((this.form.link_code || '').trim()) {
+          return
+        }
+        const pid = this.extractQueryParam(this.form.click_link, 'pid')
+        if (!pid || (pid.startsWith('__') && pid.endsWith('__'))) {
+          return
+        }
+        this.form.link_code = pid
+      },
+      isLinkMacro(value) {
+        const text = (value || '').trim()
+        if (!text) {
+          return true
+        }
+        if (text.startsWith('__') && text.endsWith('__')) {
+          return true
+        }
+        return text.startsWith('{') && text.endsWith('}')
+      },
+      syncXuchao2LinkCode() {
+        if (this.form.channel_code !== 'xuchao2') {
+          return
+        }
+        if ((this.form.link_code || '').trim()) {
+          return
+        }
+        const offerId = this.extractQueryParam(this.form.click_link, 'offer_id')
+        if (this.isLinkMacro(offerId)) {
+          return
+        }
+        this.form.link_code = offerId
+      },
+      syncYanxinLinkCode() {
+        if (this.form.channel_code !== 'yanxin') {
+          return
+        }
+        if ((this.form.link_code || '').trim()) {
+          return
+        }
+        const fid = this.extractQueryParam(this.form.click_link, 'fid')
+        if (this.isLinkMacro(fid)) {
+          return
+        }
+        this.form.link_code = fid
+      },
+      syncKeshuo2LinkCode() {
+        if (this.form.channel_code !== 'keshuo2') {
+          return
+        }
+        if ((this.form.link_code || '').trim()) {
+          return
+        }
+        const channelId = this.extractQueryParam(this.form.click_link, 'channel_id')
+        if (this.isLinkMacro(channelId)) {
+          return
+        }
+        this.form.link_code = channelId
+      },
+      syncXuriLinkCode() {
+        if (this.form.channel_code !== 'xuri') {
+          return
+        }
+        if ((this.form.link_code || '').trim()) {
+          return
+        }
+        const channel = this.extractQueryParam(this.form.click_link, 'channel')
+        if (this.isLinkMacro(channel)) {
+          return
+        }
+        this.form.link_code = channel
+      },
+      syncYoudaoLinkCode() {
+        if (this.form.channel_code !== 'youdao') {
+          return
+        }
+        if ((this.form.link_code || '').trim()) {
+          return
+        }
+        const aid = this.extractQueryParam(this.form.click_link, 'aid')
+        if (this.isLinkMacro(aid)) {
+          return
+        }
+        this.form.link_code = aid
+      },
+      syncYoyoLinkCode() {
+        if (this.form.channel_code !== 'yoyo') {
+          return
+        }
+        if ((this.form.link_code || '').trim()) {
+          return
+        }
+        const dispatchCenterId = this.extractQueryParam(this.form.click_link, 'dispatchCenterId')
+        if (this.isLinkMacro(dispatchCenterId)) {
+          return
+        }
+        this.form.link_code = dispatchCenterId
+      },
+      syncYunwapLinkCode() {
+        if (this.form.channel_code !== 'yunwap') {
+          return
+        }
+        if ((this.form.link_code || '').trim()) {
+          return
+        }
+        const channel = this.extractQueryParam(this.form.click_link, 'channel')
+        if (this.isLinkMacro(channel)) {
+          return
+        }
+        this.form.link_code = channel
+      },
+      syncYunxunzhidaLinkCode() {
+        if (this.form.channel_code !== 'yunxunzhida') {
+          return
+        }
+        if ((this.form.link_code || '').trim()) {
+          return
+        }
+        const dispatchItemId = this.extractQueryParam(this.form.click_link, 'dispatch_item_id')
+        if (this.isLinkMacro(dispatchItemId)) {
+          return
+        }
+        this.form.link_code = dispatchItemId
+      },
+      syncDerivedLinkCode() {
+        this.syncNingzhiLinkCode()
+        this.syncSoulLinkCode()
+        this.syncTaquLinkCode()
+        this.syncTianyuemengLinkCode()
+        this.syncZhongshiLinkCode()
+        this.syncTubiLinkCode()
+        this.syncVipLinkCode()
+        this.syncXiaohongshuLinkCode()
+        this.syncXuanyiLinkCode()
+        this.syncXuchao2LinkCode()
+        this.syncYanxinLinkCode()
+        this.syncKeshuo2LinkCode()
+        this.syncXuriLinkCode()
+        this.syncYoudaoLinkCode()
+        this.syncYoyoLinkCode()
+        this.syncYunwapLinkCode()
+        this.syncYunxunzhidaLinkCode()
       },
       resolveWanmobFormFields(data) {
         let clickLink = data.click_link || ''
@@ -474,7 +864,8 @@
           extra_info: '',
           param_values: [],
           wanmob_event_type: 1,
-          bohai_pack_id: ''
+          bohai_pack_id: '',
+          junbo_ad_id: ''
         }
         this.linkParamHint = []
       },
@@ -503,6 +894,13 @@
         } else {
           this.form.bohai_pack_id = ''
         }
+        if (channelCode !== 'junbo') {
+          this.form.junbo_ad_id = ''
+        }
+        if (channelCode === 'meituan') {
+          this.syncMeituanMonitor()
+        }
+        this.syncDerivedLinkCode()
       },
       openAddDialog() {
         this.isEdit = false
@@ -534,9 +932,16 @@
             extra_info: data.extra_info || '',
             param_values: data.param_values || [],
             wanmob_event_type: wanmobFields.wanmobEventType,
-            bohai_pack_id: isBohai ? bohaiFields.bohaiPackId : ''
+            bohai_pack_id: isBohai ? bohaiFields.bohaiPackId : '',
+            junbo_ad_id: data.channel_code === 'junbo'
+              ? (((data.param_values || []).find(item => item.param_name === 'adId') || {}).param_value || '')
+              : ''
           }
           this.loadLinkParamHint(data.channel_code)
+          if (data.channel_code === 'meituan') {
+            this.syncMeituanMonitor()
+          }
+          this.syncDerivedLinkCode()
           this.dialogVisible = true
           this.$nextTick(() => {
             if (this.$refs.formRef) {
@@ -558,6 +963,10 @@
         if (this.form.channel_code === 'bohai') {
           this.syncBohaiClickLink()
         }
+        if (this.form.channel_code === 'meituan') {
+          this.syncMeituanMonitor()
+        }
+        this.syncDerivedLinkCode()
         const payload = {
           id: this.form.id,
           channel_code: this.form.channel_code,
@@ -572,6 +981,9 @@
         }
         if (this.form.channel_code === 'wanmob') {
           payload.event_type = String(this.form.wanmob_event_type)
+        }
+        if (this.form.channel_code === 'junbo') {
+          payload.ad_id = (this.form.junbo_ad_id || '').trim()
         }
         return payload
       },
