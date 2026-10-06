@@ -131,6 +131,34 @@ const routes = [
     }
   },
   {
+    path: '/media_flow_allocate_list',
+    component: Layout,
+    children: [
+      {
+        path: '',
+        name: 'MediaFlowAllocateList',
+        component: () => import('@/views/ad/media_flow_allocate_list.vue')
+      }
+    ],
+    props: {
+      menuIndex: 'media-flow-allocate-list'
+    }
+  },
+  {
+    path: '/app_show_data_supply_list',
+    component: Layout,
+    children: [
+      {
+        path: '',
+        name: 'AppShowDataSupplyList',
+        component: () => import('@/views/ad/app_show_data_supply_list.vue')
+      }
+    ],
+    props: {
+      menuIndex: 'app-show-data-supply-list'
+    }
+  },
+  {
     path: '/ad_link',
     component: Layout,
     children: [

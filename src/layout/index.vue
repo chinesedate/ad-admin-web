@@ -80,6 +80,14 @@
             <i class="el-icon-paperclip"></i>
             <span slot="title">媒体链接</span>
           </el-menu-item>
+          <el-menu-item index="media-flow-allocate-list">
+            <i class="el-icon-set-up"></i>
+            <span slot="title">流量分配</span>
+          </el-menu-item>
+          <el-menu-item index="app-show-data-supply-list">
+            <i class="el-icon-upload"></i>
+            <span slot="title">曝光补充</span>
+          </el-menu-item>
           <!--          <li class="menu-item">-->
           <!--            <router-link to="/home">主页</router-link>-->
           <!--          </li>-->
@@ -191,6 +199,10 @@
           this.activeIndex = 'adv-budget-link-list';
         } else if (path.startsWith('/adv_media_link_list')) {
           this.activeIndex = 'adv-media-link-list';
+        } else if (path.startsWith('/media_flow_allocate_list')) {
+          this.activeIndex = 'media-flow-allocate-list';
+        } else if (path.startsWith('/app_show_data_supply_list')) {
+          this.activeIndex = 'app-show-data-supply-list';
         }
       },
       /**
@@ -215,6 +227,10 @@
           this.$router.push('/adv_budget_link_list');
         } else if (menuIndex === 'adv-media-link-list') {
           this.$router.push('/adv_media_link_list');
+        } else if (menuIndex === 'media-flow-allocate-list') {
+          this.$router.push('/media_flow_allocate_list');
+        } else if (menuIndex === 'app-show-data-supply-list') {
+          this.$router.push('/app_show_data_supply_list');
         }
       },
     },

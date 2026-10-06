@@ -293,3 +293,89 @@ export function removeAdvChannelAction(id) {
     method: 'delete'
   })
 }
+
+/**
+ * 查询媒体流量分配配置列表
+ */
+export function pageListMediaFlowAllocate(data) {
+  return request({
+    url: '/track/admin/media-flow-allocate-list',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 添加媒体流量分配配置
+ */
+export function addMediaFlowAllocate(data) {
+  return request({
+    url: '/track/admin/media-flow-allocate',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 更新媒体流量分配配置
+ */
+export function updateMediaFlowAllocate(data) {
+  return request({
+    url: '/track/admin/media-flow-allocate',
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 删除媒体流量分配配置
+ */
+export function removeMediaFlowAllocate(id) {
+  return request({
+    url: `/track/admin/media-flow-allocate/${id}`,
+    method: 'delete'
+  })
+}
+
+/**
+ * 查询媒体曝光补充配置列表
+ */
+export function pageListAppShowDataSupply(data) {
+  return request({
+    url: '/track/admin/app-show-data-supply-list',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 添加媒体曝光补充配置
+ */
+export function addAppShowDataSupply(data) {
+  return request({
+    url: '/track/admin/app-show-data-supply',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 更新媒体曝光补充配置
+ */
+export function updateAppShowDataSupply(data) {
+  return request({
+    url: '/track/admin/app-show-data-supply',
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 删除媒体曝光补充配置
+ */
+export function removeAppShowDataSupply(id) {
+  return request({
+    url: `/track/admin/app-show-data-supply/${id}`,
+    method: 'delete'
+  })
+}
