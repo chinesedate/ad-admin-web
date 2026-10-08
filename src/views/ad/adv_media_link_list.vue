@@ -117,7 +117,7 @@
     <el-dialog
       :title="isEdit ? '编辑媒体链接' : '添加媒体链接'"
       :visible.sync="dialogVisible"
-      width="820px"
+      width="720px"
       :close-on-click-modal="false"
       @close="closeDialog">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
@@ -158,7 +158,7 @@
               size="small"
               class="link-param-tag"
               :type="Number(item.param_required) === 0 ? 'danger' : 'info'">
-              {{ item.param_name }}{{ Number(item.param_required) === 0 ? '（必填）' : '' }}
+              {{ mediaParamTagText(item) }}
             </el-tag>
           </div>
         </el-form-item>
@@ -170,6 +170,7 @@
           <el-input
             v-model="item.param_value"
             maxlength="500"
+            :style="mediaParamInputStyle(item.param_name)"
             :placeholder="mediaParamInputPlaceholder(item.param_name)"/>
         </el-form-item>
         <el-form-item label="回调率：" prop="conversion_rate">
@@ -215,6 +216,7 @@
             :rows="2"
             maxlength="2000"
             show-word-limit
+            style="width: 460px"
             placeholder="选填"/>
         </el-form-item>
       </el-form>
@@ -272,6 +274,11 @@
   } from '@/api/ad-data'
 
   const MEDIA_AUTO_PARAM_NAMES = ['channel_id', 'customer_id', 'app_id', 'rz_ch', 'CH']
+  const MEDIA_PARAM_COMMENT = {
+    capital_id: '资产id',
+    carrier_id: '载体id',
+    secret_key: '秘钥'
+  }
 
   export default {
     name: 'adv_media_link_list',
@@ -358,6 +365,17 @@
         }
         return url.includes('://')
       },
+      mediaParamTagText(item) {
+        const comment = MEDIA_PARAM_COMMENT[item.param_name]
+        const name = comment ? item.param_name + '（' + comment + '）' : item.param_name
+        return name + (Number(item.param_required) === 0 ? '（必填）' : '')
+      },
+      mediaParamInputStyle(paramName) {
+        if (MEDIA_PARAM_COMMENT[paramName]) {
+          return {width: '460px'}
+        }
+        return null
+      },
       mediaParamInputPlaceholder(paramName) {
         if (MEDIA_AUTO_PARAM_NAMES.includes(paramName)) {
           return '留空则根据生成的链接自动填充'
@@ -391,11 +409,18 @@
           this.linkParamFields = []
         })
       },
+      normalizeMediaParamValue(paramName, value) {
+        const text = (value || '').trim()
+        if (MEDIA_PARAM_COMMENT[paramName]) {
+          return text.replace(/\s+/g, '')
+        }
+        return text
+      },
       buildMediaLinkParamValues() {
         return (this.linkParamFields || [])
           .map(item => ({
             param_name: (item.param_name || '').trim(),
-            param_value: (item.param_value || '').trim()
+            param_value: this.normalizeMediaParamValue(item.param_name, item.param_value)
           }))
           .filter(item => item.param_name && item.param_value)
       },
