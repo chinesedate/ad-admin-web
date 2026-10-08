@@ -120,7 +120,7 @@
       width="720px"
       :close-on-click-modal="false"
       @close="closeDialog">
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="150px">
         <el-form-item v-if="!isEdit" label="预算链接：" prop="adv_link_id">
           <el-select
             v-model="form.adv_link_id"
@@ -277,7 +277,18 @@
   const MEDIA_PARAM_COMMENT = {
     capital_id: '资产id',
     carrier_id: '载体id',
-    secret_key: '秘钥'
+    secret_key: '秘钥',
+    owner_id: '广告主id',
+    api_id: '接口id',
+    api_key: '接口密钥',
+    src_id: '事件源id',
+    pkg: '包名',
+    access_token: '授权令牌',
+    cnv_id: '转化id',
+    token: '令牌',
+    app_key: '应用标识',
+    client_id: '客户id',
+    corp_id: '广告主标识'
   }
 
   export default {

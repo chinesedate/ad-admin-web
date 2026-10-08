@@ -304,7 +304,7 @@
         ref="mediaFormRef"
         :model="media_link_form"
         :rules="media_rules"
-        label-width="100px"
+        label-width="150px"
       >
         <el-form-item label="渠道：" prop="channel_code">
           <el-select
@@ -417,7 +417,7 @@
         ref="mediaFormModifyRef"
         :model="media_link_modify_form"
         :rules="media_modify_rules"
-        label-width="100px"
+        label-width="150px"
       >
         <el-form-item v-if="mediaLinkModifyParamHint.length" label="参数字典：">
           <div class="link-param-hint">
@@ -522,7 +522,18 @@
   const MEDIA_PARAM_COMMENT = {
     capital_id: '资产id',
     carrier_id: '载体id',
-    secret_key: '秘钥'
+    secret_key: '秘钥',
+    owner_id: '广告主id',
+    api_id: '接口id',
+    api_key: '接口密钥',
+    src_id: '事件源id',
+    pkg: '包名',
+    access_token: '授权令牌',
+    cnv_id: '转化id',
+    token: '令牌',
+    app_key: '应用标识',
+    client_id: '客户id',
+    corp_id: '广告主标识'
   }
 
   export default {
