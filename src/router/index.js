@@ -131,6 +131,21 @@ const routes = [
     }
   },
   {
+    path: '/adv_media_link_debug/:id',
+    component: Layout,
+    children: [
+      {
+        path: '',
+        name: 'AdvMediaLinkDebug',
+        component: () => import('@/views/ad/adv_media_link_debug.vue'),
+        props: true
+      }
+    ],
+    props: {
+      menuIndex: 'adv-media-link-list'
+    }
+  },
+  {
     path: '/media_flow_allocate_list',
     component: Layout,
     children: [

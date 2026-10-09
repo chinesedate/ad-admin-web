@@ -161,6 +161,22 @@ export function updateMediaLink(data) {
   })
 }
 
+export function getMediaDebugLog(mediaLinkId) {
+  return request({
+    url: '/track/admin/media-debug-log',
+    method: 'get',
+    params: {media_link_id: mediaLinkId}
+  })
+}
+
+export function submitMediaDebugAction(data) {
+  return request({
+    url: '/track/admin/media-debug-action',
+    method: 'post',
+    data
+  })
+}
+
 /**
  * 删除媒体链接
  */

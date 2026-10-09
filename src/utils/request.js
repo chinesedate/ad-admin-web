@@ -127,7 +127,9 @@ service.interceptors.response.use(
             })
           })
         }
-        return Promise.reject(new Error(res.message || 'Error'))
+        const err = new Error(res.message || 'Error')
+        err.code = res.code
+        return Promise.reject(err)
       } else {
         return response
       }

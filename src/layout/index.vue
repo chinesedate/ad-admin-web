@@ -197,7 +197,7 @@
           this.activeIndex = 'adv-channel-action-list';
         } else if (path.startsWith('/adv_budget_link_list')) {
           this.activeIndex = 'adv-budget-link-list';
-        } else if (path.startsWith('/adv_media_link_list')) {
+        } else if (path.startsWith('/adv_media_link_list') || path.startsWith('/adv_media_link_debug')) {
           this.activeIndex = 'adv-media-link-list';
         } else if (path.startsWith('/media_flow_allocate_list')) {
           this.activeIndex = 'media-flow-allocate-list';

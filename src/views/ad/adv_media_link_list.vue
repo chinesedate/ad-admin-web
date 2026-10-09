@@ -81,14 +81,25 @@
           <el-table-column prop="channel_name" label="媒体" min-width="100" show-overflow-tooltip/>
           <el-table-column prop="channel_id" label="渠道ID" min-width="110" show-overflow-tooltip/>
           <el-table-column prop="customer_id" label="客户ID" min-width="90" show-overflow-tooltip/>
+          <el-table-column label="投放状态" min-width="140">
+            <template #default="scope">
+              <el-tag
+                v-if="deliveryStatusText(scope.row)"
+                size="mini"
+                :type="scope.row.is_debug === 1 ? 'warning' : 'success'">
+                {{ deliveryStatusText(scope.row) }}
+              </el-tag>
+            </template>
+          </el-table-column>
           <el-table-column prop="app_id" label="应用ID" min-width="100" show-overflow-tooltip/>
           <el-table-column prop="conversion_rate_label" label="回调配置" min-width="120" show-overflow-tooltip/>
           <el-table-column prop="create_time" label="创建时间" min-width="150" show-overflow-tooltip/>
           <el-table-column prop="update_time" label="修改时间" min-width="150" show-overflow-tooltip/>
-          <el-table-column label="操作" min-width="280" align="center" class-name="adv-media-op-col">
+          <el-table-column label="操作" min-width="340" align="center" class-name="adv-media-op-col">
             <template #default="scope">
               <el-button type="primary" size="mini" class="adv-link-operate-button" @click="openMonitorDialog(scope.row)">监测</el-button>
               <el-button type="primary" size="mini" class="adv-link-operate-button" @click="goAdvLinkDetail(scope.row)">广告主链接</el-button>
+              <el-button v-if="isDebugMedia(scope.row.channel_code)" type="primary" size="mini" class="adv-link-operate-button" @click="goDebug(scope.row)">联调</el-button>
               <el-button type="primary" size="mini" class="adv-link-operate-button" @click="openEditDialog(scope.row)">编辑</el-button>
               <el-popconfirm title="确定删除吗？" @confirm="handleRemove(scope.row)">
                 <template #reference>
@@ -172,6 +183,12 @@
             maxlength="500"
             :style="mediaParamInputStyle(item.param_name)"
             :placeholder="mediaParamInputPlaceholder(item.param_name)"/>
+        </el-form-item>
+        <el-form-item v-if="isEdit && isDebugMedia(form.channel_code)" label="投放状态：">
+          <el-radio-group v-model="form.is_debug">
+            <el-radio :label="1">联调</el-radio>
+            <el-radio :label="0">正式</el-radio>
+          </el-radio-group>
         </el-form-item>
         <el-form-item label="回调率：" prop="conversion_rate">
           <div class="conversion-rate-row">
@@ -274,6 +291,7 @@
   } from '@/api/ad-data'
 
   const MEDIA_AUTO_PARAM_NAMES = ['channel_id', 'customer_id', 'app_id', 'rz_ch', 'CH']
+  const DEBUG_MEDIA_CODES = ['mi4', 'honor', 'baidu', 'baidu2', 'huawei']
   const MEDIA_PARAM_COMMENT = {
     capital_id: '资产id',
     carrier_id: '载体id',
@@ -324,7 +342,8 @@
           conversion_rate: 80,
           rate_min_limit: false,
           rate_min_limit_num: 1,
-          extra_info: ''
+          extra_info: '',
+          is_debug: 1
         },
         rules: {
           adv_link_id: [{required: true, message: '请选择预算链接', trigger: 'change'}],
@@ -542,7 +561,8 @@
           conversion_rate: 80,
           rate_min_limit: false,
           rate_min_limit_num: 1,
-          extra_info: ''
+          extra_info: '',
+          is_debug: 1
         }
         this.selected_adv_channel_code = ''
         this.add_media_channel_list = []
@@ -569,7 +589,8 @@
           conversion_rate: row.conversion_rate,
           rate_min_limit: row.rate_min_limit,
           rate_min_limit_num: row.rate_min_limit_num,
-          extra_info: row.extra_info || ''
+          extra_info: row.extra_info || '',
+          is_debug: row.is_debug === 1 ? 1 : 0
         }
         this.loadLinkParamFields(row.channel_code, row.param_values || [])
         this.dialogVisible = true
@@ -593,8 +614,27 @@
       },
       handleMediaChannelChange(channelCode) {
         this.loadLinkParamFields(channelCode, [])
+        if (this.isDebugMedia(channelCode)) {
+          this.form.is_debug = 1
+        }
       },
-      handleSubmit() {
+      isDebugMedia(channelCode) {
+        return DEBUG_MEDIA_CODES.indexOf(channelCode) >= 0
+      },
+      deliveryStatusText(row) {
+        if (!this.isDebugMedia(row.channel_code)) {
+          return ''
+        }
+        if (row.is_debug === 1 && row.debug_events) {
+          return '联调 · 自动回传'
+        }
+        return row.is_debug === 1 ? '联调' : '正式'
+      },
+      goDebug(row) {
+        this.$router.push('/adv_media_link_debug/' + row.id)
+      },
+      handleSubmit(forceDebugOff) {
+        const force = forceDebugOff === true
         this.$refs.formRef.validate(valid => {
           if (!valid) {
             return
@@ -606,6 +646,12 @@
             rate_min_limit_num: this.form.rate_min_limit_num,
             extra_info: this.form.extra_info,
             param_values: this.buildMediaLinkParamValues()
+          }
+          if (this.isDebugMedia(this.form.channel_code)) {
+            payload.is_debug = this.form.is_debug
+            if (force) {
+              payload.force_debug_off = true
+            }
           }
           const request = this.isEdit
             ? updateMediaLink({id: this.form.id, ...payload})
@@ -619,6 +665,16 @@
             this.closeDialog()
             this.listMediaLinks()
           }).catch(err => {
+            if (err.code === 10020) {
+              this.$confirm('尚未有成功的联调回传，仍要改成正式投放吗？', '切换正式投放', {
+                confirmButtonText: '确认切换',
+                cancelButtonText: '取消',
+                type: 'warning'
+              }).then(() => {
+                this.handleSubmit(true)
+              }).catch(() => {})
+              return
+            }
             this.$message.error(err.message || '保存失败')
           }).finally(() => {
             this.submitLoading = false
