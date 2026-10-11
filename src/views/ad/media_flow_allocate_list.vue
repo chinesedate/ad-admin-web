@@ -71,6 +71,11 @@
           </el-table-column>
           <el-table-column prop="flow_allocate_order" label="流量分配顺序" min-width="110" align="center"
                            show-overflow-tooltip/>
+          <el-table-column prop="alert_ratio" label="预警比例" min-width="100" align="center">
+            <template #default="scope">
+              {{ scope.row.alert_ratio != null ? scope.row.alert_ratio + '%' : '—' }}
+            </template>
+          </el-table-column>
           <el-table-column prop="is_active" label="状态" min-width="90" align="center">
             <template #default="scope">
               <el-tag
@@ -183,6 +188,11 @@
         <el-form-item label="流量分配顺序：" prop="flow_allocate_order">
           <el-input-number v-model="form.flow_allocate_order" :precision="0" style="width: 180px"/>
         </el-form-item>
+        <el-form-item label="预警比例：" prop="alert_ratio">
+          <el-input-number v-model="form.alert_ratio" :min="1" :max="100" :precision="0" style="width: 180px"/>
+          <span class="alert-ratio-suffix">%</span>
+          <div class="form-item-tip">该配置处于流量分配最后一条时，预警比例才生效</div>
+        </el-form-item>
         <el-form-item label="状态：" prop="is_active">
           <el-radio-group v-model="form.is_active">
             <el-radio :label="0">开启</el-radio>
@@ -266,6 +276,7 @@ export default {
         ration_denominator: 1,
         flow_allocate_num: 0,
         flow_allocate_order: 0,
+        alert_ratio: 80,
         is_active: 0,
         date_range: [],
         note_info: ''
@@ -282,6 +293,19 @@ export default {
         ration_denominator: [
           {required: true, message: '请输入点击转曝光分母', trigger: 'blur'},
           {validator: buildRationValidator('denominator'), trigger: ['blur', 'change']}
+        ],
+        alert_ratio: [
+          {required: true, message: '请输入预警比例', trigger: 'blur'},
+          {
+            validator: (rule, value, callback) => {
+              const ratio = Number(value)
+              if (!ratio || ratio < 1 || ratio > 100) {
+                return callback(new Error('预警比例必须是1-100之间的整数'))
+              }
+              callback()
+            },
+            trigger: ['blur', 'change']
+          }
         ],
         is_active: [{required: true, message: '请选择状态', trigger: 'change'}],
         // daterange 绑定的是数组，必须声明 type: 'array'，否则空数组会被 required 判为已填
@@ -361,6 +385,7 @@ export default {
         ration_denominator: 1,
         flow_allocate_num: 0,
         flow_allocate_order: 0,
+        alert_ratio: 80,
         is_active: 0,
         date_range: [],
         note_info: ''
@@ -384,6 +409,7 @@ export default {
         ration_denominator: Number(row.ration_denominator) || 1,
         flow_allocate_num: Number(row.flow_allocate_num) || 0,
         flow_allocate_order: Number(row.flow_allocate_order) || 0,
+        alert_ratio: row.alert_ratio == null ? 80 : Number(row.alert_ratio),
         is_active: row.is_active == null ? 0 : Number(row.is_active),
         date_range: (row.start_date && row.end_date) ? [row.start_date, row.end_date] : [],
         note_info: row.note_info || ''
@@ -419,6 +445,7 @@ export default {
         ration_denominator: Number(form.ration_denominator) || 1,
         flow_allocate_num: Number(form.flow_allocate_num) || 0,
         flow_allocate_order: Number(form.flow_allocate_order) || 0,
+        alert_ratio: Number(form.alert_ratio) || 80,
         is_active: Number(form.is_active),
         start_date: dateRange[0] || undefined,
         end_date: dateRange[1] || undefined,
@@ -516,6 +543,19 @@ export default {
   padding: 0 8px;
   line-height: 40px;
   color: #909399;
+}
+
+.alert-ratio-suffix {
+  padding-left: 6px;
+  line-height: 40px;
+  color: #909399;
+}
+
+.form-item-tip {
+  color: #909399;
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 5px;
 }
 
 .adv-media-table {
