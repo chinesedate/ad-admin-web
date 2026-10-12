@@ -37,6 +37,7 @@
           :data="clicks"
           border
           size="small"
+          :max-height="clicks.length > 10 ? 420 : null"
           empty-text="还没有联调点击"
           :row-class-name="clickRowClass"
           @row-click="selectClick">
@@ -95,7 +96,7 @@
           <div class="media-debug-section-title">联调记录</div>
           <div class="media-debug-tip">同一次点击的多条回传记在一起。这一轮都成功后，才能切换正式投放。</div>
         </header>
-        <el-table :data="logs" border size="small" empty-text="还没有联调记录">
+        <el-table :data="logs" border size="small" :max-height="logs.length > 10 ? 420 : null" empty-text="还没有联调记录">
           <el-table-column prop="create_time" label="时间" width="170"/>
           <el-table-column prop="behavior" label="行为" width="120"/>
           <el-table-column label="结果" width="90">

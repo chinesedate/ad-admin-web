@@ -95,15 +95,25 @@
           <el-table-column prop="conversion_rate_label" label="回调配置" min-width="120" show-overflow-tooltip/>
           <el-table-column prop="create_time" label="创建时间" min-width="150" show-overflow-tooltip/>
           <el-table-column prop="update_time" label="修改时间" min-width="150" show-overflow-tooltip/>
-          <el-table-column label="操作" min-width="340" align="center" class-name="adv-media-op-col">
+          <el-table-column label="操作" width="210" align="center" class-name="adv-media-op-col">
             <template #default="scope">
-              <el-button type="primary" size="mini" class="adv-link-operate-button" @click="openMonitorDialog(scope.row)">监测</el-button>
-              <el-button type="primary" size="mini" class="adv-link-operate-button" @click="goAdvLinkDetail(scope.row)">广告主链接</el-button>
-              <el-button v-if="isDebugMedia(scope.row.channel_code)" type="primary" size="mini" class="adv-link-operate-button" @click="goDebug(scope.row)">联调</el-button>
-              <el-button type="primary" size="mini" class="adv-link-operate-button" @click="openEditDialog(scope.row)">编辑</el-button>
+              <el-tooltip content="监测" placement="top">
+                <el-button type="primary" size="mini" icon="el-icon-view" circle class="adv-link-operate-button" @click="openMonitorDialog(scope.row)"/>
+              </el-tooltip>
+              <el-tooltip content="广告主链接" placement="top">
+                <el-button type="primary" size="mini" icon="el-icon-link" circle class="adv-link-operate-button" @click="goAdvLinkDetail(scope.row)"/>
+              </el-tooltip>
+              <el-tooltip v-if="isDebugMedia(scope.row.channel_code)" content="联调" placement="top">
+                <el-button type="primary" size="mini" icon="el-icon-s-promotion" circle class="adv-link-operate-button" @click="goDebug(scope.row)"/>
+              </el-tooltip>
+              <el-tooltip content="编辑" placement="top">
+                <el-button type="primary" size="mini" icon="el-icon-edit" circle class="adv-link-operate-button" @click="openEditDialog(scope.row)"/>
+              </el-tooltip>
               <el-popconfirm title="确定删除吗？" @confirm="handleRemove(scope.row)">
                 <template #reference>
-                  <el-button type="danger" size="mini" class="adv-link-operate-button">删除</el-button>
+                  <el-tooltip content="删除" placement="top">
+                    <el-button type="danger" size="mini" icon="el-icon-delete" circle class="adv-link-operate-button"/>
+                  </el-tooltip>
                 </template>
               </el-popconfirm>
             </template>
@@ -776,7 +786,11 @@
   }
 
   .adv-link-operate-button {
-    margin-left: 6px;
+    margin-left: 4px;
+  }
+
+  ::v-deep .adv-media-op-col .cell {
+    white-space: nowrap;
   }
 
   .link-param-hint {
