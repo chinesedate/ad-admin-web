@@ -744,7 +744,22 @@
         }
         this.form.link_code = dispatchItemId
       },
+      syncShirui2LinkCode() {
+        if (this.form.channel_code !== 'shirui2') {
+          return
+        }
+        if ((this.form.link_code || '').trim()) {
+          return
+        }
+        const adid = this.extractQueryParam(this.form.click_link, 'adid')
+        const channelid = this.extractQueryParam(this.form.click_link, 'channelid')
+        if (this.isLinkMacro(adid) || this.isLinkMacro(channelid)) {
+          return
+        }
+        this.form.link_code = adid + '_' + channelid
+      },
       syncDerivedLinkCode() {
+        this.syncShirui2LinkCode()
         this.syncNingzhiLinkCode()
         this.syncSoulLinkCode()
         this.syncTaquLinkCode()
