@@ -7,7 +7,11 @@ const state = {
   name: '',
   avatar: '',
   introduction: '',
-  roles: []
+  roles: [],
+  // 权限点编码列表，含 '*' 表示全权限（超级管理员）
+  permissions: [],
+  // 是否已拉取过用户权限信息，避免每次路由跳转都请求
+  permissionsLoaded: false
 }
 
 const mutations = {
@@ -28,6 +32,12 @@ const mutations = {
   },
   SET_ROLES: (state, roles) => {
     state.roles = roles
+  },
+  SET_PERMISSIONS: (state, permissions) => {
+    state.permissions = permissions
+  },
+  SET_PERMISSIONS_LOADED: (state, loaded) => {
+    state.permissionsLoaded = loaded
   }
 }
 
@@ -38,7 +48,6 @@ const actions = {
     return new Promise((resolve, reject) => {
       login({username: username.trim(), password: password, verifyCode: verifyCode}).then(res => {
         const {data} = res
-        console.log(data.data);
         // 存储用户token
         commit('SET_TOKEN', data.data.access_token)
         setToken(data.data.access_token)
@@ -52,28 +61,23 @@ const actions = {
     })
   },
 
-  // get user info
-  getInfo({commit, state}) {
+  // 获取当前用户的角色与权限点
+  getInfo({commit}) {
     return new Promise((resolve, reject) => {
-      getInfo(state.token).then(res => {
-        const {data} = res
+      getInfo().then(res => {
+        // 响应拦截器返回的是 axios response，后端响应体是 res.data，业务数据在 res.data.data
+        const payload = res.data && res.data.data
 
-        if (!data) {
-          reject('Verification failed, please Login again.')
+        if (!payload) {
+          reject('获取用户信息失败，请重新登录')
+          return
         }
 
-        const {roles, name, avatar, introduction} = data
-
-        // roles must be a non-empty array
-        if (!roles || roles.length <= 0) {
-          reject('getInfo: roles must be a non-null array!')
-        }
-
-        commit('SET_ROLES', roles)
-        commit('SET_NAME', name)
-        commit('SET_AVATAR', avatar)
-        commit('SET_INTRODUCTION', introduction)
-        resolve(data)
+        commit('SET_NAME', payload.username || '')
+        commit('SET_ROLES', payload.role_codes || [])
+        commit('SET_PERMISSIONS', payload.perm_codes || [])
+        commit('SET_PERMISSIONS_LOADED', true)
+        resolve(payload)
       }).catch(error => {
         reject(error)
       })
@@ -87,13 +91,10 @@ const actions = {
       logout(state.token).then(() => {
         commit('SET_TOKEN', '')
         commit('SET_ROLES', [])
+        commit('SET_PERMISSIONS', [])
+        commit('SET_PERMISSIONS_LOADED', false)
         removeToken()
-        router.push('/home')
-        // resetRouter()
-
-        // reset visited views and cached views
-        // to fixed https://github.com/PanJiaChen/vue-element-admin/issues/2485
-        // dispatch('tagsView/delAllViews', null, { root: true })
+        router.push('/login')
 
         resolve()
       }).catch(error => {
@@ -107,29 +108,11 @@ const actions = {
     return new Promise(resolve => {
       commit('SET_TOKEN', '')
       commit('SET_ROLES', [])
+      commit('SET_PERMISSIONS', [])
+      commit('SET_PERMISSIONS_LOADED', false)
       removeToken()
       resolve()
     })
-  },
-
-  // dynamically modify permissions
-  async changeRoles({commit, dispatch}, role) {
-    const token = role + '-token'
-
-    commit('SET_TOKEN', token)
-    setToken(token)
-
-    const {roles} = await dispatch('getInfo')
-
-    // resetRouter()
-
-    // generate accessible routes map based on roles
-    const accessRoutes = await dispatch('permission/generateRoutes', roles, {root: true})
-    // dynamically add accessible routes
-    router.addRoutes(accessRoutes)
-
-    // reset visited views and cached views
-    dispatch('tagsView/delAllViews', null, {root: true})
   }
 }
 

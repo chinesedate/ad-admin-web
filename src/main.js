@@ -14,8 +14,11 @@ import 'quill/dist/quill.bubble.css'
 import 'normalize.css/normalize.css' // a modern alternative to CSS resets
 import '@/styles/index.scss'
 
+import permission from '@/directive/permission'
+
 Vue.use(VueQuillEditor)
 Vue.use(ElementUI)
+Vue.directive('permission', permission)
 Vue.config.productionTip = false
 
 new Vue({

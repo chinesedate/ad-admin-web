@@ -6,6 +6,7 @@ import BookLayout from '@/layout/book-layout';
 import HomeLayout from '@/layout/home-layout';
 import Login from '@/views/login';
 import store from "@/store";
+import {Message} from 'element-ui';
 
 Vue.use(VueRouter)
 
@@ -19,7 +20,11 @@ const routes = [
         name: 'IndexHome',
         component: () => import('@/views/ad/ad_data')
       }
-    ]
+    ],
+    meta: {
+      title: '广告数据',
+      permission: 'ad_data:list'
+    }
   },
   {
     path: '/home',
@@ -44,6 +49,10 @@ const routes = [
     ],
     props: {
       menuIndex: 'ad-data'
+    },
+    meta: {
+      title: '广告数据',
+      permission: 'ad_data:list'
     }
   },
   {
@@ -58,6 +67,10 @@ const routes = [
     ],
     props: {
       menuIndex: 'ad-channel'
+    },
+    meta: {
+      title: '渠道信息',
+      permission: 'channel:list'
     }
   },
   {
@@ -72,6 +85,10 @@ const routes = [
     ],
     props: {
       menuIndex: 'adv-media-list'
+    },
+    meta: {
+      title: '预算媒体管理',
+      permission: 'adv_media:list'
     }
   },
   {
@@ -86,6 +103,10 @@ const routes = [
     ],
     props: {
       menuIndex: 'adv-channel-up-down-list'
+    },
+    meta: {
+      title: '渠道上下游',
+      permission: 'up_down_info:list'
     }
   },
   {
@@ -100,6 +121,10 @@ const routes = [
     ],
     props: {
       menuIndex: 'adv-channel-action-list'
+    },
+    meta: {
+      title: '转化配置',
+      permission: 'up_down_action:list'
     }
   },
   {
@@ -114,6 +139,10 @@ const routes = [
     ],
     props: {
       menuIndex: 'adv-budget-link-list'
+    },
+    meta: {
+      title: '预算链接',
+      permission: 'adv_link:list'
     }
   },
   {
@@ -128,6 +157,10 @@ const routes = [
     ],
     props: {
       menuIndex: 'adv-media-link-list'
+    },
+    meta: {
+      title: '媒体链接',
+      permission: 'media_link:list'
     }
   },
   {
@@ -143,6 +176,10 @@ const routes = [
     ],
     props: {
       menuIndex: 'adv-media-link-list'
+    },
+    meta: {
+      title: '媒体链接',
+      permission: 'media_link:list'
     }
   },
   {
@@ -157,6 +194,10 @@ const routes = [
     ],
     props: {
       menuIndex: 'media-flow-allocate-list'
+    },
+    meta: {
+      title: '流量分配',
+      permission: 'flow:list'
     }
   },
   {
@@ -171,6 +212,28 @@ const routes = [
     ],
     props: {
       menuIndex: 'app-show-data-supply-list'
+    },
+    meta: {
+      title: '曝光补充',
+      permission: 'app_show:list'
+    }
+  },
+  {
+    path: '/user_permission',
+    component: Layout,
+    children: [
+      {
+        path: '',
+        name: 'UserPermission',
+        component: () => import('@/views/ad/user_permission.vue')
+      }
+    ],
+    props: {
+      menuIndex: 'user-permission'
+    },
+    meta: {
+      title: '用户权限',
+      permission: 'user:list'
     }
   },
   {
@@ -200,6 +263,10 @@ const routes = [
     ],
     props: {
       menuIndex: 'ad-link'
+    },
+    meta: {
+      title: '链接',
+      permission: 'adv_link:list'
     }
   },
   // {
@@ -718,16 +785,40 @@ const createRouter = () => new VueRouter({
 })
 const router = createRouter()
 
-router.beforeEach(((to, from, next) => {
+router.beforeEach((async (to, from, next) => {
   document.title = '管理平台'
-  // 检测当前页面是否登录，如果没有登录则跳转到登录页
-  if (to.path !== '/login' && !store.getters.token) {
+  // 登录页直接放行
+  if (to.path === '/login') {
+    next();
+    return;
+  }
+  // 未登录时跳转到登录页
+  if (!store.getters.token) {
     router.replace({
       path: '/login'
     }).then();
-  } else {
-    next();
+    return;
   }
+  // 已登录但还没拉取权限信息（首次进入或刷新页面），先拉取再放行
+  if (!store.getters.permissionsLoaded) {
+    try {
+      await store.dispatch('user/getInfo');
+    } catch (e) {
+      store.dispatch('user/resetToken');
+      router.replace({
+        path: '/login'
+      }).then();
+      return;
+    }
+  }
+  // 页面级权限校验
+  const permission = to.meta && to.meta.permission;
+  if (permission && !store.getters.hasPerm(permission)) {
+    Message.error('无权限访问该页面');
+    next(false);
+    return;
+  }
+  next();
 }))
 
 // Detail see: https://github.com/vuejs/vue-router/issues/1234#issuecomment-357941465

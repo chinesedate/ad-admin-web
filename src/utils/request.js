@@ -136,7 +136,7 @@ service.interceptors.response.use(
     }
   },
   error => {
-    if (error.response.status === 401) {
+    if (error.response && error.response.status === 401) {
       // 仅仅在token不为空时，执行提示逻辑，避免多个接口401时提醒多次
       if (store.getters.token) {
         store.dispatch('user/resetToken').then(
@@ -154,6 +154,14 @@ service.interceptors.response.use(
           }
         )
       }
+    } else if (error.response && error.response.status === 403) {
+      // 已登录但没有该接口的权限
+      Message({
+        showClose: true,
+        message: (error.response.data && error.response.data.detail) || '无权限访问该资源',
+        type: 'error',
+        duration: 5 * 1000
+      })
     } else {
       // console.log('err' + error) // for debug
       Message({

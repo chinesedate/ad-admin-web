@@ -16,30 +16,6 @@
           @click="handleLogout">
           退出登录
         </el-button>
-        <!--        <el-dropdown class="header-menu-item" :show-timeout="20">-->
-        <!--          <span class="el-dropdown-link">-->
-        <!--            项目<i class="el-icon-arrow-down el-icon&#45;&#45;right"></i>-->
-        <!--          </span>-->
-        <!--          <el-dropdown-menu slot="dropdown">-->
-        <!--            <el-dropdown-item>技术大神</el-dropdown-item>-->
-        <!--            <el-dropdown-item>api++</el-dropdown-item>-->
-        <!--            <el-dropdown-item>小黑板</el-dropdown-item>-->
-        <!--            <el-dropdown-item disabled>双皮奶</el-dropdown-item>-->
-        <!--            <el-dropdown-item divided>蚵仔煎</el-dropdown-item>-->
-        <!--          </el-dropdown-menu>-->
-        <!--        </el-dropdown>-->
-        <!--        <el-dropdown class="header-menu-item" :show-timeout="20">-->
-        <!--          <span class="el-dropdown-link">-->
-        <!--            团队<i class="el-icon-arrow-down el-icon&#45;&#45;right"></i>-->
-        <!--          </span>-->
-        <!--          <el-dropdown-menu slot="dropdown">-->
-        <!--            <el-dropdown-item>黄金糕</el-dropdown-item>-->
-        <!--            <el-dropdown-item>狮子头</el-dropdown-item>-->
-        <!--            <el-dropdown-item>螺蛳粉</el-dropdown-item>-->
-        <!--            <el-dropdown-item disabled>双皮奶</el-dropdown-item>-->
-        <!--            <el-dropdown-item divided>蚵仔煎</el-dropdown-item>-->
-        <!--          </el-dropdown-menu>-->
-        <!--        </el-dropdown>-->
       </div>
     </el-header>
     <el-container>
@@ -48,91 +24,13 @@
           class="side-nav-menu"
           :default-active="activeIndex"
           @select="handleMenuSelect">
-          <el-menu-item index="ad-data">
-            <i class="el-icon-s-data"></i>
-            <span slot="title">广告数据</span>
+          <el-menu-item
+            v-for="menu in visibleMenus"
+            :key="menu.index"
+            :index="menu.index">
+            <i :class="menu.icon"></i>
+            <span slot="title">{{ menu.title }}</span>
           </el-menu-item>
-          <el-menu-item index="ad-link">
-            <i class="el-icon-link"></i>
-            <span slot="title">链接</span>
-          </el-menu-item>
-          <el-menu-item index="ad-channel">
-            <i class="el-icon-share"></i>
-            <span slot="title">渠道信息</span>
-          </el-menu-item>
-          <el-menu-item index="adv-media-list">
-            <i class="el-icon-folder-opened"></i>
-            <span slot="title">预算媒体管理</span>
-          </el-menu-item>
-          <el-menu-item index="adv-channel-up-down-list">
-            <i class="el-icon-connection"></i>
-            <span slot="title">渠道上下游</span>
-          </el-menu-item>
-          <el-menu-item index="adv-channel-action-list">
-            <i class="el-icon-s-operation"></i>
-            <span slot="title">转化配置</span>
-          </el-menu-item>
-          <el-menu-item index="adv-budget-link-list">
-            <i class="el-icon-document"></i>
-            <span slot="title">预算链接</span>
-          </el-menu-item>
-          <el-menu-item index="adv-media-link-list">
-            <i class="el-icon-paperclip"></i>
-            <span slot="title">媒体链接</span>
-          </el-menu-item>
-          <el-menu-item index="media-flow-allocate-list">
-            <i class="el-icon-set-up"></i>
-            <span slot="title">流量分配</span>
-          </el-menu-item>
-          <el-menu-item index="app-show-data-supply-list">
-            <i class="el-icon-upload"></i>
-            <span slot="title">曝光补充</span>
-          </el-menu-item>
-          <!--          <li class="menu-item">-->
-          <!--            <router-link to="/home">主页</router-link>-->
-          <!--          </li>-->
-          <!--          <li class="menu-item">-->
-          <!--            <router-link to="/qa-info-audit">问答审核</router-link>-->
-          <!--          </li>-->
-          <!--          <li class="menu-item">-->
-          <!--            <router-link to="/qa-answer-audit">问答回复审核</router-link>-->
-          <!--          </li>-->
-          <!--          <li class="menu-item">-->
-          <!--            <router-link to="/qa-tab-audit">标签页审核</router-link>-->
-          <!--          </li>-->
-          <!--          <li class="menu-item">-->
-          <!--            <router-link to="/qa-tool-audit">问答工具审核</router-link>-->
-          <!--          </li>-->
-          <!--          <li class="menu-item">-->
-          <!--            <router-link to="/tool-audit">工具审核</router-link>-->
-          <!--          </li>-->
-          <!--          <li class="menu-item">-->
-          <!--            <router-link to="/tool-edit">工具编辑</router-link>-->
-          <!--          </li>-->
-          <!--          <li class="menu-item">-->
-          <!--            <router-link to="/modify-data-audit">编辑数据</router-link>-->
-          <!--          </li>-->
-          <!--          <li class="menu-item">-->
-          <!--            <router-link to="/user-edit">用户审核</router-link>-->
-          <!--          </li>-->
-          <!--          <li class="menu-item">-->
-          <!--            <router-link to="/name-manage">名称管理</router-link>-->
-          <!--          </li>-->
-          <!--          <li class="menu-item">-->
-          <!--            <router-link to="/tool-category-audit">工具分类审核</router-link>-->
-          <!--          </li>-->
-          <!--          <li class="menu-item">-->
-          <!--            <router-link to="/tool-category-edit">工具分类编辑</router-link>-->
-          <!--          </li>-->
-          <!--          <li class="menu-item">-->
-          <!--            <router-link to="/issue-audit">问答审核</router-link>-->
-          <!--          </li>-->
-          <!--          <li class="menu-item">-->
-          <!--            <router-link to="/article-audit">文章审核</router-link>-->
-          <!--          </li>-->
-          <!--          <li class="menu-item">-->
-          <!--            <router-link to="/article-audit">文章编辑</router-link>-->
-          <!--          </li>-->
         </el-menu>
       </el-aside>
       <el-main>
@@ -143,6 +41,7 @@
 </template>
 
 <script>
+  import menus from '@/config/menus'
 
   export default {
     name: "index",
@@ -154,7 +53,8 @@
     },
     data() {
       return {
-        activeIndex: this.menuIndex
+        activeIndex: this.menuIndex,
+        menus: menus
       };
     },
     watch: {
@@ -169,6 +69,12 @@
       isLogin() {
         // 校验用户是否登录，未登录时跳转登录页面（token 为undefined或''时，跳转登录页面）
         return this.$store.getters.token;
+      },
+      /**
+       * 按当前用户的权限点过滤后的菜单
+       */
+      visibleMenus() {
+        return this.menus.filter(menu => this.$store.getters.hasPerm(menu.permission));
       }
     },
     methods: {
@@ -179,60 +85,24 @@
         this.$store.dispatch('user/logout');
       },
       handleMenuSelect(menuIndex) {
-        this.handleMenuItemClick(menuIndex);
-      },
-      syncActiveFromRoute() {
-        const path = this.$route.path;
-        if (path.startsWith('/ad_data') || path === '/') {
-          this.activeIndex = 'ad-data';
-        } else if (path.startsWith('/ad_link')) {
-          this.activeIndex = 'ad-link';
-        } else if (path.startsWith('/ad_channel')) {
-          this.activeIndex = 'ad-channel';
-        } else if (path.startsWith('/adv_media_list')) {
-          this.activeIndex = 'adv-media-list';
-        } else if (path.startsWith('/adv_channel_up_down_list')) {
-          this.activeIndex = 'adv-channel-up-down-list';
-        } else if (path.startsWith('/adv_channel_action_list')) {
-          this.activeIndex = 'adv-channel-action-list';
-        } else if (path.startsWith('/adv_budget_link_list')) {
-          this.activeIndex = 'adv-budget-link-list';
-        } else if (path.startsWith('/adv_media_link_list') || path.startsWith('/adv_media_link_debug')) {
-          this.activeIndex = 'adv-media-link-list';
-        } else if (path.startsWith('/media_flow_allocate_list')) {
-          this.activeIndex = 'media-flow-allocate-list';
-        } else if (path.startsWith('/app_show_data_supply_list')) {
-          this.activeIndex = 'app-show-data-supply-list';
+        const menu = this.menus.find(item => item.index === menuIndex);
+        if (!menu) {
+          return;
+        }
+        this.activeIndex = menu.index;
+        if (this.$route.path !== menu.path) {
+          this.$router.push(menu.path);
         }
       },
       /**
-       * 处理菜单点击事件
-       * @param menuIndex
+       * 根据当前路由高亮对应菜单，支持详情页等子路径
        */
-      handleMenuItemClick(menuIndex) {
-        this.activeIndex = menuIndex;
-        if (menuIndex === 'ad-data') {
-          this.$router.push('/ad_data');
-        } else if (menuIndex === 'ad-link') {
-          this.$router.push('/ad_link/list');
-        } else if (menuIndex === 'ad-channel') {
-          this.$router.push('/ad_channel');
-        } else if (menuIndex === 'adv-media-list') {
-          this.$router.push('/adv_media_list');
-        } else if (menuIndex === 'adv-channel-up-down-list') {
-          this.$router.push('/adv_channel_up_down_list');
-        } else if (menuIndex === 'adv-channel-action-list') {
-          this.$router.push('/adv_channel_action_list');
-        } else if (menuIndex === 'adv-budget-link-list') {
-          this.$router.push('/adv_budget_link_list');
-        } else if (menuIndex === 'adv-media-link-list') {
-          this.$router.push('/adv_media_link_list');
-        } else if (menuIndex === 'media-flow-allocate-list') {
-          this.$router.push('/media_flow_allocate_list');
-        } else if (menuIndex === 'app-show-data-supply-list') {
-          this.$router.push('/app_show_data_supply_list');
-        }
-      },
+      syncActiveFromRoute() {
+        const path = this.$route.path;
+        const matched = this.menus.find(menu =>
+          (menu.prefixes || []).some(prefix => path === prefix || path.startsWith(prefix + '/')));
+        this.activeIndex = matched ? matched.index : '';
+      }
     },
     mounted() {
       this.syncActiveFromRoute();
