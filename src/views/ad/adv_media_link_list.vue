@@ -301,7 +301,7 @@
   } from '@/api/ad-data'
 
   const MEDIA_AUTO_PARAM_NAMES = ['channel_id', 'customer_id', 'app_id', 'rz_ch', 'CH']
-  const DEBUG_MEDIA_CODES = ['mi4', 'honor', 'baidu', 'baidu2', 'huawei']
+  const DEBUG_MEDIA_CODES = ['mi4', 'honor', 'baidu', 'baidu2', 'huawei', 'youku']
   const MEDIA_PARAM_COMMENT = {
     capital_id: '资产id',
     carrier_id: '载体id',

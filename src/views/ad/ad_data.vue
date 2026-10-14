@@ -164,7 +164,6 @@
             </el-checkbox-group>
           </div>
         </div>
-        <div v-if="customer_id_value.length || app_id_value.length" class="column-hint">已按所选客户或应用只显示有数据的列</div>
         <el-table
           :data="tableData"
           ref="adDataTable"
@@ -172,12 +171,14 @@
           show-summary
           :summary-method="summarizeTable"
           :row-class-name="tableRowClassName"
-          style="width: 100%">
+          style="width: 100%"
+          @sort-change="handleSortChange">
           <el-table-column
             v-for="col in visibleColumns"
             :key="col.prop"
             :prop="col.prop"
             :label="col.label"
+            :sortable="metricSortable(col.prop)"
             :min-width="col.minWidth || 100">
           </el-table-column>
         </el-table>
@@ -392,8 +393,8 @@
         time_type: -2,
         time_options: [{value: -2, label: '全天'}, {value: -1, label: '分小时'}],
         showColumnSelector: false,
-        // 选了客户ID时，接口返回本次查询里有数的行为列；null 表示不收列
-        activeMetricProps: null,
+        sortProp: '',
+        sortOrder: '',
         tableSummary: {},
       }
     },
@@ -566,6 +567,18 @@
           this.app_id_options.push({value: app_id, label: label});
         }
       },
+      metricSortable(prop) {
+        if (prop === 'conversion_rate') {
+          return false
+        }
+        return METRIC_PROPS.has(prop) ? 'custom' : false
+      },
+      handleSortChange({prop, order}) {
+        this.sortProp = order ? prop : ''
+        this.sortOrder = order || ''
+        this.pageNum = 1
+        this.listAdData()
+      },
       handleAdDataPickChange() {
         // 处理广告数据筛选
         // if (refresh_data)
@@ -588,7 +601,9 @@
           app_id_list: this.app_id_value,
           ad_status_list: this.ad_status_value,
           self_action_list: this.self_action_value,
-          time_type: this.time_type
+          time_type: this.time_type,
+          sort_prop: this.sortProp,
+          sort_order: this.sortOrder
         }
         if (this.ad_type_value !== '') {
           ad_data_query_param.ad_type = this.ad_type_value
@@ -602,9 +617,6 @@
             if (res.data.data != null) {
               this.tableData = res.data.data.list;
               this.tableSummary = res.data.data.summary || {};
-              this.activeMetricProps = (this.customer_id_value.length || this.app_id_value.length)
-                ? (res.data.data.active_metric_props || [])
-                : null;
               let is_new = true;
               let row_key = "";
               for (let rowData of this.tableData) {
@@ -669,13 +681,7 @@
       },
       visibleColumns() {
         const selected = new Set(this.visibleColumnProps);
-        const active = this.activeMetricProps;
-        return ALL_COLUMNS.filter(col => {
-          if (active && METRIC_PROPS.has(col.prop)) {
-            return active.indexOf(col.prop) !== -1;
-          }
-          return selected.has(col.prop);
-        });
+        return ALL_COLUMNS.filter(col => selected.has(col.prop));
       }
     },
     created() {
