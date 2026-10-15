@@ -202,18 +202,9 @@
   import {pageListAdData, fetchAdDataPickInfo, exportAdData} from "@/api/ad-data";
 
   const STORAGE_KEY = 'ad_data_table_columns_v4';
-  const DEFAULT_COLUMNS = [
+  const FIXED_COLUMNS = [
     'ad_day', 'ad_hour', 'link_name', 'budget_party', 'product_name', 'delivery_platform',
-    'channel_id', 'customer_id', 'app_id',
-    'show_success', 'show_fail',
-    'click_success',
-    'activate_success', 'activate_fail',
-    'register_success',
-    'pay_success',
-    'order_success',
-    'retain_success',
-    'recall_success', 'recall_fail',
-    'conversion_rate'
+    'channel_id', 'customer_id', 'app_id'
   ];
   const CALLBACK_PRESET = [
     'ad_day', 'ad_hour', 'link_name', 'budget_party', 'product_name', 'delivery_platform',
@@ -425,31 +416,13 @@
         return row_class_name;
       },
       loadColumnVisibility() {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          try {
-            const parsed = JSON.parse(saved);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              const validProps = new Set(ALL_COLUMNS.map(col => col.prop));
-              const filtered = parsed.filter(prop => validProps.has(prop));
-              if (filtered.length > 0) {
-                if (filtered.indexOf('show_success') === -1) {
-                  const clickIndex = filtered.indexOf('click_success');
-                  if (clickIndex >= 0) {
-                    filtered.splice(clickIndex, 0, 'show_success');
-                  } else {
-                    filtered.push('show_success');
-                  }
-                }
-                this.visibleColumnProps = filtered;
-                this.saveColumnVisibility();
-                return;
-              }
-            }
-          } catch (e) {/* ignore */
-          }
-        }
-        this.visibleColumnProps = [...DEFAULT_COLUMNS];
+        this.visibleColumnProps = [...FIXED_COLUMNS];
+      },
+      applyActiveColumns(activeMetricProps) {
+        const active = new Set(activeMetricProps || []);
+        const fixed = new Set(FIXED_COLUMNS);
+        this.visibleColumnProps = ALL_COLUMNS.map(col => col.prop).filter(prop => fixed.has(prop) || active.has(prop));
+        this.saveColumnVisibility();
       },
       saveColumnVisibility() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(this.visibleColumnProps));
@@ -507,7 +480,7 @@
         this.customer_id_value = [];
         this.app_id_value = [];
         this.listAdDataPickInfo();
-        this.listAdData();
+        this.listAdData(true);
       },
       listAdDataPickInfo() {
         // 查询广告数据筛选信息
@@ -585,9 +558,9 @@
 
         // 触发查询
         this.pageNum = 1;
-        this.listAdData();
+        this.listAdData(true);
       },
-      listAdData() {
+      listAdData(syncColumns) {
         console.log(this.date_list[0])
         let query_start_date = new Date(this.date_list[0])
         let query_end_date = new Date(this.date_list[1])
@@ -617,6 +590,9 @@
             if (res.data.data != null) {
               this.tableData = res.data.data.list;
               this.tableSummary = res.data.data.summary || {};
+              if (syncColumns) {
+                this.applyActiveColumns(res.data.data.active_metric_props || []);
+              }
               let is_new = true;
               let row_key = "";
               for (let rowData of this.tableData) {
@@ -687,7 +663,7 @@
     created() {
       this.loadColumnVisibility();
       this.listAdDataPickInfo();
-      this.listAdData();
+      this.listAdData(true);
     }
   }
 </script>
