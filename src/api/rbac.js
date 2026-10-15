@@ -43,3 +43,47 @@ export function saveUserDataScope(data) {
         data
     })
 }
+
+/**
+ * 全量权限点字典（页面 + 页内按钮）
+ */
+export function permissionList() {
+    return request({
+        url: '/track/admin/permission-list',
+        method: 'get'
+    })
+}
+
+/**
+ * 角色列表（含各自权限点）
+ */
+export function roleList() {
+    return request({
+        url: '/track/admin/role-list',
+        method: 'get'
+    })
+}
+
+/**
+ * 保存角色的页面权限点
+ * @param data {role_id, perm_codes: []}
+ */
+export function saveRolePermission(data) {
+    return request({
+        url: '/track/admin/role-permission',
+        method: 'put',
+        data
+    })
+}
+
+/**
+ * 保存用户级页面权限增量
+ * @param data {user_id, grants: [], denies: []}
+ */
+export function saveUserPermission(data) {
+    return request({
+        url: '/track/admin/sys-user-permission',
+        method: 'put',
+        data
+    })
+}
