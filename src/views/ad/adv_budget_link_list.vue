@@ -28,7 +28,7 @@
               v-model="search_keyword"/>
           </el-form-item>
           <el-form-item class="pick-form-item">
-            <el-button type="primary" @click="openAddDialog">添加</el-button>
+            <el-button v-permission="'adv_link:edit'" type="primary" @click="openAddDialog">添加</el-button>
           </el-form-item>
         </el-form>
         <el-table
@@ -69,10 +69,10 @@
           <el-table-column prop="create_time" label="添加时间" width="200" show-overflow-tooltip/>
           <el-table-column label="操作" width="200" align="center" class-name="adv-media-op-col">
             <template #default="scope">
-              <el-button type="primary" size="mini" class="adv-link-operate-button" @click="openEditDialog(scope.row)">编辑</el-button>
+              <el-button v-permission="'adv_link:edit'" type="primary" size="mini" class="adv-link-operate-button" @click="openEditDialog(scope.row)">编辑</el-button>
               <el-popconfirm title="确定删除吗？" @confirm="handleRemove(scope.row)">
                 <template #reference>
-                  <el-button type="danger" size="mini" class="adv-link-operate-button">删除</el-button>
+                  <el-button v-permission="'adv_link:edit'" type="danger" size="mini" class="adv-link-operate-button">删除</el-button>
                 </template>
               </el-popconfirm>
             </template>

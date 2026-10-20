@@ -33,7 +33,7 @@
                 style="width: 160px"/>
           </el-form-item>
           <el-form-item class="pick-form-item">
-            <el-button type="primary" @click="openAddDialog">添加</el-button>
+            <el-button v-permission="'app_show:edit'" type="primary" @click="openAddDialog">添加</el-button>
           </el-form-item>
         </el-form>
         <el-table
@@ -100,12 +100,12 @@
           </el-table-column>
           <el-table-column label="操作" width="160" fixed="right" align="center" class-name="adv-media-op-col">
             <template #default="scope">
-              <el-button type="primary" size="mini" class="adv-link-operate-button" @click="openEditDialog(scope.row)">
+              <el-button v-permission="'app_show:edit'" type="primary" size="mini" class="adv-link-operate-button" @click="openEditDialog(scope.row)">
                 编辑
               </el-button>
               <el-popconfirm title="确定删除吗？" @confirm="handleRemove(scope.row)">
                 <template #reference>
-                  <el-button type="danger" size="mini" class="adv-link-operate-button">删除</el-button>
+                  <el-button v-permission="'app_show:edit'" type="danger" size="mini" class="adv-link-operate-button">删除</el-button>
                 </template>
               </el-popconfirm>
             </template>

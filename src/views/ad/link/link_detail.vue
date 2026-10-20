@@ -67,7 +67,7 @@
               <span>{{advLinkInfo.extra_info || '-'}}</span>
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" @click="handleAdvLinkFormEditClick">编辑</el-button>
+              <el-button v-permission="'adv_link:edit'" type="primary" @click="handleAdvLinkFormEditClick">编辑</el-button>
             </el-form-item>
           </el-form>
           <!--编辑模式-->
@@ -124,7 +124,7 @@
             </el-form-item>
             <el-form-item>
               <el-button @click="handleAdvLinkFormEditCancel" plain>取消</el-button>
-              <el-button type="primary" @click="handleModifyAdvLink">保存</el-button>
+              <el-button v-permission="'adv_link:edit'" type="primary" @click="handleModifyAdvLink">保存</el-button>
             </el-form-item>
           </el-form>
         </el-collapse-item>
@@ -161,7 +161,7 @@
             </el-input>
           </el-form-item>
           <el-form-item class="pick-form-item">
-            <el-button type="primary" @click="activeMediaLinkAdd">添加链接</el-button>
+            <el-button v-permission="'media_link:edit'" type="primary" @click="activeMediaLinkAdd">添加链接</el-button>
           </el-form-item>
         </el-form>
         <el-table
@@ -266,11 +266,11 @@
                 @click="toggleExpand(scope.row)">
                 {{isRowExpanded(scope.row) ? '收起' : '详情'}}
               </el-button>
-              <el-button class="media-link-operate-button" type="primary" size="mini"
+              <el-button v-permission="'media_link:edit'" class="media-link-operate-button" type="primary" size="mini"
                          @click="activeMediaLinkModify(scope.row)">
                 编辑
               </el-button>
-              <el-popconfirm title="确定删除吗？" class="media-link-operate-button"
+              <el-popconfirm v-permission="'media_link:edit'" title="确定删除吗？" class="media-link-operate-button"
                              @confirm="handleMediaLinkRemove(scope.row)">
                 <template #reference>
                   <el-button type="danger" size="mini">删除</el-button>
@@ -400,7 +400,7 @@
 
       <span slot="footer" class="dialog-footer">
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="submitLoading" @click="handleMediaLinkAdd">
+        <el-button v-permission="'media_link:edit'" type="primary" :loading="submitLoading" @click="handleMediaLinkAdd">
           确定
         </el-button>
       </span>
@@ -499,7 +499,7 @@
 
       <span slot="footer" class="dialog-footer">
         <el-button @click="modifyDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="submitLoading" @click="handleMediaLinkModify">
+        <el-button v-permission="'media_link:edit'" type="primary" :loading="submitLoading" @click="handleMediaLinkModify">
           确定
         </el-button>
       </span>

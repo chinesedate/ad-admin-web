@@ -119,6 +119,7 @@
             label="操作">
             <template #default="scope">
               <el-button
+                v-permission="'channel:edit'"
                 type="primary"
                 size="mini"
                 @click="activeChannelAppModify(scope.row)"

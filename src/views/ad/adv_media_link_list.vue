@@ -42,7 +42,7 @@
               v-model="search_keyword"/>
           </el-form-item>
           <el-form-item class="pick-form-item">
-            <el-button type="primary" @click="openAddDialog">添加</el-button>
+            <el-button v-permission="'media_link:edit'" type="primary" @click="openAddDialog">添加</el-button>
           </el-form-item>
         </el-form>
         <el-table
@@ -103,13 +103,13 @@
               <el-tooltip content="广告主链接" placement="top">
                 <el-button type="primary" size="mini" icon="el-icon-link" circle class="adv-link-operate-button" @click="goAdvLinkDetail(scope.row)"/>
               </el-tooltip>
-              <el-tooltip v-if="isDebugMedia(scope.row.channel_code)" content="联调" placement="top">
+              <el-tooltip v-if="isDebugMedia(scope.row.channel_code)" v-permission="'media_debug'" content="联调" placement="top">
                 <el-button type="primary" size="mini" icon="el-icon-s-promotion" circle class="adv-link-operate-button" @click="goDebug(scope.row)"/>
               </el-tooltip>
-              <el-tooltip content="编辑" placement="top">
+              <el-tooltip v-permission="'media_link:edit'" content="编辑" placement="top">
                 <el-button type="primary" size="mini" icon="el-icon-edit" circle class="adv-link-operate-button" @click="openEditDialog(scope.row)"/>
               </el-tooltip>
-              <el-popconfirm title="确定删除吗？" @confirm="handleRemove(scope.row)">
+              <el-popconfirm v-permission="'media_link:edit'" title="确定删除吗？" @confirm="handleRemove(scope.row)">
                 <template #reference>
                   <el-tooltip content="删除" placement="top">
                     <el-button type="danger" size="mini" icon="el-icon-delete" circle class="adv-link-operate-button"/>
