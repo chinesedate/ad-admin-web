@@ -7,9 +7,11 @@
         </span>
         <span class="header-title">广告平台</span>
       </div>
-      <div class="header-actions">
+      <div class="header-actions" v-if="isLogin">
+        <span class="header-username" v-if="currentUsername">
+          <i class="el-icon-user"></i>{{ currentUsername }}
+        </span>
         <el-button
-          v-if="isLogin"
           class="header-logout-btn"
           size="small"
           icon="el-icon-switch-button"
@@ -23,14 +25,32 @@
         <el-menu
           class="side-nav-menu"
           :default-active="activeIndex"
+          :default-openeds="defaultOpeneds"
           @select="handleMenuSelect">
-          <el-menu-item
-            v-for="menu in visibleMenus"
-            :key="menu.index"
-            :index="menu.index">
-            <i :class="menu.icon"></i>
-            <span slot="title">{{ menu.title }}</span>
-          </el-menu-item>
+          <template v-for="menu in visibleMenus">
+            <el-submenu
+              v-if="menu.children && menu.children.length"
+              :key="'sub-' + menu.index"
+              :index="menu.index">
+              <template slot="title">
+                <i :class="menu.icon"></i>
+                <span>{{ menu.title }}</span>
+              </template>
+              <el-menu-item
+                v-for="child in menu.children"
+                :key="child.index"
+                :index="child.index">
+                <span slot="title">{{ child.title }}</span>
+              </el-menu-item>
+            </el-submenu>
+            <el-menu-item
+              v-else
+              :key="'item-' + menu.index"
+              :index="menu.index">
+              <i :class="menu.icon"></i>
+              <span slot="title">{{ menu.title }}</span>
+            </el-menu-item>
+          </template>
         </el-menu>
       </el-aside>
       <el-main>
@@ -70,11 +90,25 @@
         // 校验用户是否登录，未登录时跳转登录页面（token 为undefined或''时，跳转登录页面）
         return this.$store.getters.token;
       },
+      currentUsername() {
+        return this.$store.getters.name || ''
+      },
       /**
-       * 按当前用户的权限点过滤后的菜单
+       * 按当前用户的权限点过滤后的菜单；有子菜单时仅保留有权限的子项，子项全空则隐藏父级
        */
       visibleMenus() {
-        return this.menus.filter(menu => this.$store.getters.hasPerm(menu.permission));
+        return this.menus.map(menu => {
+          if (menu.children && menu.children.length) {
+            const children = menu.children.filter(child => this.$store.getters.hasPerm(child.permission))
+            return children.length ? Object.assign({}, menu, {children}) : null
+          }
+          return this.$store.getters.hasPerm(menu.permission) ? menu : null
+        }).filter(Boolean)
+      },
+      defaultOpeneds() {
+        return this.visibleMenus
+          .filter(menu => menu.children && menu.children.length && menu.index !== 'base-config')
+          .map(menu => menu.index)
       }
     },
     methods: {
@@ -84,9 +118,24 @@
       handleLogout() {
         this.$store.dispatch('user/logout');
       },
+      findMenuByIndex(menuIndex) {
+        for (let i = 0; i < this.menus.length; i++) {
+          const menu = this.menus[i]
+          if (menu.index === menuIndex) {
+            return menu
+          }
+          const children = menu.children || []
+          for (let j = 0; j < children.length; j++) {
+            if (children[j].index === menuIndex) {
+              return children[j]
+            }
+          }
+        }
+        return null
+      },
       handleMenuSelect(menuIndex) {
-        const menu = this.menus.find(item => item.index === menuIndex);
-        if (!menu) {
+        const menu = this.findMenuByIndex(menuIndex);
+        if (!menu || !menu.path) {
           return;
         }
         this.activeIndex = menu.index;
@@ -99,8 +148,15 @@
        */
       syncActiveFromRoute() {
         const path = this.$route.path;
-        const matched = this.menus.find(menu =>
-          (menu.prefixes || []).some(prefix => path === prefix || path.startsWith(prefix + '/')));
+        let matched = null
+        this.menus.forEach(menu => {
+          const candidates = menu.children && menu.children.length ? menu.children : [menu]
+          candidates.forEach(item => {
+            if ((item.prefixes || []).some(prefix => path === prefix || path.startsWith(prefix + '/'))) {
+              matched = item
+            }
+          })
+        })
         this.activeIndex = matched ? matched.index : '';
       }
     },
@@ -157,6 +213,20 @@
   .header-actions {
     display: flex;
     align-items: center;
+    gap: 12px;
+  }
+
+  .header-username {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #303133;
+    font-size: 13px;
+    font-weight: 600;
+
+    i {
+      font-size: 14px;
+    }
   }
 
   .header-logout-btn {

@@ -56,6 +56,24 @@ const routes = [
     }
   },
   {
+    path: '/honor_supplement',
+    component: Layout,
+    children: [
+      {
+        path: '',
+        name: 'HonorSupplement',
+        component: () => import('@/views/ad/honor_supplement.vue')
+      }
+    ],
+    props: {
+      menuIndex: 'honor-supplement'
+    },
+    meta: {
+      title: '荣耀补回传',
+      permission: 'honor_supplement:list'
+    }
+  },
+  {
     path: '/ad_channel',
     component: Layout,
     children: [
