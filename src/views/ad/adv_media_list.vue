@@ -22,7 +22,7 @@
             </el-input>
           </el-form-item>
           <el-form-item class="pick-form-item">
-            <el-button type="primary" @click="openAddDialog">添加</el-button>
+            <el-button v-permission="'adv_media:edit'" type="primary" @click="openAddDialog">添加</el-button>
           </el-form-item>
         </el-form>
         <el-table
@@ -73,6 +73,7 @@
             <template #default="scope">
               <el-button
                 v-if="Number(scope.row.up_down_type) === 1"
+                v-permission="'link_param:list'"
                 class="adv-link-operate-button"
                 type="success"
                 size="mini"
@@ -80,18 +81,20 @@
               </el-button>
               <el-button
                 v-if="Number(scope.row.up_down_type) === 0"
+                v-permission="'link_param:list'"
                 class="adv-link-operate-button"
                 type="success"
                 size="mini"
                 @click="openMediaLinkParamDialog(scope.row)">字段参数
               </el-button>
               <el-button
+                v-permission="'adv_media:edit'"
                 class="adv-link-operate-button"
                 type="primary"
                 size="mini"
                 @click="openEditDialog(scope.row)">编辑
               </el-button>
-              <el-popconfirm title="确定删除吗？" @confirm="handleRemove(scope.row)">
+              <el-popconfirm v-permission="'adv_media:edit'" title="确定删除吗？" @confirm="handleRemove(scope.row)">
                 <template #reference>
                   <el-button class="adv-link-operate-button" type="danger" size="mini">删除</el-button>
                 </template>
@@ -184,16 +187,16 @@
         </el-table-column>
         <el-table-column label="操作" width="90" align="center">
           <template #default="scope">
-            <el-button type="text" @click="removeLinkParamRow(scope.$index)">删除</el-button>
+            <el-button v-permission="'link_param:edit'" type="text" @click="removeLinkParamRow(scope.$index)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
       <div class="link-param-toolbar">
-        <el-button type="primary" plain icon="el-icon-plus" @click="addLinkParamRow">增加一行</el-button>
+        <el-button v-permission="'link_param:edit'" type="primary" plain icon="el-icon-plus" @click="addLinkParamRow">增加一行</el-button>
       </div>
       <span slot="footer" class="dialog-footer">
         <el-button @click="closeLinkParamDialog">取消</el-button>
-        <el-button type="primary" :loading="linkParamSubmitLoading" @click="handleLinkParamSubmit">保存</el-button>
+        <el-button v-permission="'link_param:edit'" type="primary" :loading="linkParamSubmitLoading" @click="handleLinkParamSubmit">保存</el-button>
       </span>
     </el-dialog>
   </div>

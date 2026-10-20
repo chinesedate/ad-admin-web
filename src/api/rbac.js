@@ -11,12 +11,14 @@ export function sysUserList() {
 }
 
 /**
- * 数据范围候选值（渠道 / 广告主）
+ * 数据范围候选值（渠道 / 广告主 / 客户 / 应用）
+ * @param params {channel_codes: 'a,b', advertiser_codes: 'c,d'} 传已选值用于联动过滤客户与应用
  */
-export function dataScopeOptions() {
+export function dataScopeOptions(params) {
     return request({
         url: '/track/admin/data-scope-options',
-        method: 'get'
+        method: 'get',
+        params
     })
 }
 
@@ -41,6 +43,41 @@ export function saveUserDataScope(data) {
         url: '/track/admin/sys-user-data-scope',
         method: 'put',
         data
+    })
+}
+
+/**
+ * 新建用户
+ * @param data {username, password, role_codes: [], state}  password 传 md5 后的值
+ */
+export function createSysUser(data) {
+    return request({
+        url: '/track/admin/sys-user',
+        method: 'post',
+        data
+    })
+}
+
+/**
+ * 修改用户密码
+ * @param data {user_id, password}  password 传 md5 后的值
+ */
+export function saveUserPassword(data) {
+    return request({
+        url: '/track/admin/sys-user-password',
+        method: 'put',
+        data
+    })
+}
+
+/**
+ * 删除用户
+ * @param userId
+ */
+export function deleteSysUser(userId) {
+    return request({
+        url: `/track/admin/sys-user/${userId}`,
+        method: 'delete'
     })
 }
 

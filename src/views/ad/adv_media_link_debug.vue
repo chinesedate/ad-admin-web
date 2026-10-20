@@ -14,8 +14,8 @@
         </div>
         <div class="media-debug-status">
           <span><h3>投放状态切换</h3></span>
-          <el-button size="mini" :type="link.is_debug === 1 ? 'warning' : 'default'" @click="switchDebug(1)">联调</el-button>
-          <el-button size="mini" :type="link.is_debug === 0 ? 'success' : 'default'" @click="switchDebug(0)">正式</el-button>
+          <el-button v-permission="'media_debug'" size="mini" :type="link.is_debug === 1 ? 'warning' : 'default'" @click="switchDebug(1)">联调</el-button>
+          <el-button v-permission="'media_debug'" size="mini" :type="link.is_debug === 0 ? 'success' : 'default'" @click="switchDebug(0)">正式</el-button>
         </div>
       </div>
 
@@ -66,10 +66,10 @@
           </el-checkbox-group>
           <div class="media-debug-actions">
             <el-checkbox v-model="autoOn" :disabled="link.is_debug !== 1">收到点击后自动回传</el-checkbox>
-            <el-button size="small" :disabled="!canSaveAuto" :loading="saving" @click="saveAuto">
+            <el-button v-permission="'media_debug'" size="small" :disabled="!canSaveAuto" :loading="saving" @click="saveAuto">
               {{ dirty ? '保存自动回传' : '已保存' }}
             </el-button>
-            <el-button type="primary" size="small" :disabled="!canSend" :loading="sending" @click="sendCurrent">
+            <el-button v-permission="'media_debug'" type="primary" size="small" :disabled="!canSend" :loading="sending" @click="sendCurrent">
               回传当前点击
             </el-button>
           </div>
@@ -112,6 +112,7 @@
         </el-table>
         <div v-if="link.is_debug === 1" class="media-debug-card-foot">
           <el-button
+            v-permission="'media_debug'"
             type="primary"
             :disabled="!canPromote"
             @click="switchDebug(0)">

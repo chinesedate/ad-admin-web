@@ -4,6 +4,14 @@
       <!-- ==================== 用户权限 ==================== -->
       <el-tab-pane label="用户权限" name="user">
         <div class="user-permission-content">
+          <div class="user-toolbar">
+            <el-button
+              v-permission="'user:edit'"
+              type="primary"
+              size="mini"
+              icon="el-icon-plus"
+              @click="openCreateDialog">添加用户</el-button>
+          </div>
           <el-table
             v-loading="loading"
             :data="tableData"
@@ -64,21 +72,51 @@
                     effect="light">
                     {{ code }}
                   </el-tag>
+                  <el-tag
+                    v-for="code in customerScopes(scope.row)"
+                    :key="'cu-' + code"
+                    class="perm-tag"
+                    type="info"
+                    size="small"
+                    effect="light">
+                    客户 {{ code }}
+                  </el-tag>
+                  <el-tag
+                    v-for="code in appScopes(scope.row)"
+                    :key="'ap-' + code"
+                    class="perm-tag"
+                    type="info"
+                    size="small"
+                    effect="light">
+                    应用 {{ code }}
+                  </el-tag>
                   <span
-                    v-if="!codeScopes(scope.row).length && !advertiserScopes(scope.row).length"
+                    v-if="!codeScopes(scope.row).length && !advertiserScopes(scope.row).length
+                      && !customerScopes(scope.row).length && !appScopes(scope.row).length"
                     class="perm-empty">
                     未配置（看不到任何数据）
                   </span>
                 </template>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="110" align="center">
+            <el-table-column label="操作" width="250" align="center">
               <template #default="scope">
                 <el-button
                   v-permission="'user:edit'"
                   type="primary"
                   size="mini"
                   @click="openEditDialog(scope.row)">编辑</el-button>
+                <el-button
+                  v-permission="'user:edit'"
+                  type="primary"
+                  size="mini"
+                  @click="openPasswordDialog(scope.row)">修改密码</el-button>
+                <el-button
+                  v-permission="'user:edit'"
+                  type="danger"
+                  size="mini"
+                  :disabled="scope.row.username === currentUsername"
+                  @click="handleDeleteUser(scope.row)">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -166,7 +204,8 @@
             filterable
             :disabled="isUnrestricted"
             placeholder="选择该用户可见的渠道（媒体侧）"
-            style="width: 100%">
+            style="width: 100%"
+            @change="onScopeChange">
             <el-option
               v-for="opt in channelOptions"
               :key="opt.value"
@@ -181,9 +220,40 @@
             filterable
             :disabled="isUnrestricted"
             placeholder="选择该用户可见的广告主"
-            style="width: 100%">
+            style="width: 100%"
+            @change="onScopeChange">
             <el-option
               v-for="opt in advertiserOptions"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"/>
+          </el-select>
+        </el-form-item>
+        <el-form-item v-if="needDataScope" label="客户ID">
+          <el-select
+            v-model="form.customer_ids"
+            multiple
+            filterable
+            :disabled="isUnrestricted || !hasScopeSource"
+            :placeholder="hasScopeSource ? '选择客户ID（候选随已选渠道/广告主联动）' : '请先选择渠道或广告主范围'"
+            style="width: 100%">
+            <el-option
+              v-for="opt in customerOptions"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"/>
+          </el-select>
+        </el-form-item>
+        <el-form-item v-if="needDataScope" label="应用">
+          <el-select
+            v-model="form.app_ids"
+            multiple
+            filterable
+            :disabled="isUnrestricted || !hasScopeSource"
+            :placeholder="hasScopeSource ? '选择应用（候选随已选渠道/广告主联动）' : '请先选择渠道或广告主范围'"
+            style="width: 100%">
+            <el-option
+              v-for="opt in appOptions"
               :key="opt.value"
               :label="opt.label"
               :value="opt.value"/>
@@ -196,12 +266,13 @@
         </el-form-item>
         <el-form-item v-else-if="defaultsToAll">
           <span class="perm-hint">
-            运营角色不选任何范围时默认可见「全部数据」；选了范围则只看所选渠道/广告主的数据。
+            运营角色不选任何范围时默认可见「全部数据」；选了范围则按所选范围收窄。
           </span>
         </el-form-item>
         <el-form-item v-else-if="needDataScope">
           <span class="perm-hint">
-            渠道与广告主范围是「并集」；都不选时该用户看不到任何广告数据。
+            同一维度内多选取「并集」，不同维度之间取「交集」（如渠道 A + 客户 X = 渠道 A 下客户 X 的数据）；
+            一项都不选时该用户看不到任何广告数据。
           </span>
         </el-form-item>
         <el-form-item v-if="needDataScope" label="页面权限">
@@ -227,34 +298,122 @@
         <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
       </div>
     </el-dialog>
+
+    <!-- ==================== 添加用户 ==================== -->
+    <el-dialog
+      title="添加用户"
+      :visible.sync="createVisible"
+      width="520px"
+      :close-on-click-modal="false"
+      @close="resetCreateForm">
+      <el-form label-width="90px">
+        <el-form-item label="用户名" required>
+          <el-input v-model="createForm.username" placeholder="登录用户名" maxlength="64"/>
+        </el-form-item>
+        <el-form-item label="密码" required>
+          <el-input v-model="createForm.password" type="password" show-password placeholder="8~16 位"/>
+        </el-form-item>
+        <el-form-item label="角色">
+          <el-select v-model="createForm.role_codes" multiple placeholder="可稍后在编辑里分配" style="width: 100%">
+            <el-option
+              v-for="opt in roleOptions"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"/>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-radio-group v-model="createForm.state">
+            <el-radio :label="0">可用</el-radio>
+            <el-radio :label="1">禁用</el-radio>
+          </el-radio-group>
+        </el-form-item>
+      </el-form>
+      <div slot="footer">
+        <el-button @click="createVisible = false">取消</el-button>
+        <el-button type="primary" :loading="creating" @click="handleCreateUser">确定</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- ==================== 修改密码 ==================== -->
+    <el-dialog
+      title="修改密码"
+      :visible.sync="pwdVisible"
+      width="480px"
+      :close-on-click-modal="false"
+      @close="resetPwdForm">
+      <el-form label-width="90px">
+        <el-form-item label="用户名">
+          <span>{{ pwdForm.username }}</span>
+        </el-form-item>
+        <el-form-item label="新密码" required>
+          <el-input v-model="pwdForm.password" type="password" show-password placeholder="8~16 位"/>
+        </el-form-item>
+        <el-form-item label="确认密码" required>
+          <el-input v-model="pwdForm.confirm" type="password" show-password placeholder="再次输入新密码"/>
+        </el-form-item>
+      </el-form>
+      <div slot="footer">
+        <el-button @click="pwdVisible = false">取消</el-button>
+        <el-button type="primary" :loading="savingPwd" @click="handleSavePassword">确定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
   import {
+    createSysUser,
     dataScopeOptions,
+    deleteSysUser,
     permissionList,
     roleList,
     saveRolePermission,
     saveUserDataScope,
+    saveUserPassword,
     saveUserPermission,
     saveUserRole,
     sysUserList
   } from '@/api/rbac'
+  import menus from '@/config/menus'
+  import md5 from 'js-md5'
 
   // 超级管理员：固定全部数据 + 全部页面，忽略所有配置
   const SUPER_ROLES = ['super_admin']
   // 运营：不配范围时默认全部数据，配了范围则按范围收窄
   const DEFAULT_ALL_ROLES = ['operator']
 
-  // 与后端 SCOPE_CHANNEL_CODE / SCOPE_ADVERTISER_CODE 对应
+  // 与后端 SCOPE_CHANNEL_CODE / SCOPE_ADVERTISER_CODE / SCOPE_CUSTOMER_ID / SCOPE_APP_ID 对应
   const SCOPE_CHANNEL_CODE = 'channel_code'
   const SCOPE_ADVERTISER_CODE = 'advertiser_code'
+  const SCOPE_CUSTOMER_ID = 'customer_id'
+  const SCOPE_APP_ID = 'app_id'
 
   // 权限点按 perm_code 冒号前缀分组（ad_data:list / ad_data:export 同属「广告数据」）。
   // 少数不带前缀或前缀与页面不一致的按钮，在这里显式归组。
   const PERM_GROUP_ALIAS = {
-    'media_debug': 'media_link'
+    'media_debug': 'media_link',
+    // 链接参数字典是「预算媒体管理」页里的按钮权限，不单独占一个页面
+    'link_param:list': 'adv_media',
+    'link_param:edit': 'adv_media'
+  }
+
+  // 菜单顺序：页面权限树按侧边栏菜单的先后排列。
+  // 「链接」与「预算链接」共用 adv_link:list，权限树里以「预算链接」的位置为准，
+  // 所以「链接」这个菜单不参与排序。
+  const MENU_ORDER_IGNORE = {'ad-link': true}
+  const MENU_ORDER = {}
+  menus.forEach((menu, index) => {
+    if (MENU_ORDER_IGNORE[menu.index]) {
+      return
+    }
+    if (menu.permission && MENU_ORDER[menu.permission] === undefined) {
+      MENU_ORDER[menu.permission] = index
+    }
+  })
+
+  function permMenuOrder(permCode) {
+    return MENU_ORDER[permCode] === undefined ? Number.MAX_SAFE_INTEGER : MENU_ORDER[permCode]
   }
 
   function permGroupKey(permCode) {
@@ -273,9 +432,28 @@
         loading: false,
         saving: false,
         savingRole: false,
+        creating: false,
+        createVisible: false,
+        createForm: {
+          username: '',
+          password: '',
+          role_codes: [],
+          state: 0
+        },
+        pwdVisible: false,
+        savingPwd: false,
+        pwdForm: {
+          user_id: null,
+          username: '',
+          password: '',
+          confirm: ''
+        },
         tableData: [],
         channelOptions: [],
         advertiserOptions: [],
+        // 客户 / 应用候选：随已选渠道、广告主联动
+        customerOptions: [],
+        appOptions: [],
         // 权限点字典与角色基线
         permList: [],
         roles: [],
@@ -288,6 +466,8 @@
           role_codes: [],
           channel_codes: [],
           advertiser_codes: [],
+          customer_ids: [],
+          app_ids: [],
           grants: [],
           denies: []
         }
@@ -297,34 +477,46 @@
       canManageRole() {
         return this.$store.getters.hasPerm('role:list')
       },
+      // 当前登录用户名，用于禁止删除自己
+      currentUsername() {
+        return this.$store.getters.name
+      },
       // 角色下拉：直接用后端角色表
       roleOptions() {
         return this.roles.map(role => ({value: role.role_code, label: role.role_name}))
       },
-      // 权限树：分组节点 + 叶子（页面/按钮）节点
+      /**
+       * 权限树：分组节点就是「菜单」本身（挂的 perm_code 是真实的 menu 权限点），
+       * 子节点只列页内按钮。菜单权限点不再单独渲染成一行，避免和分组重复、还能被单独取消。
+       */
       permTree() {
-        const groups = {}
+        const buckets = {}
         const order = []
         this.permList.forEach(perm => {
           const key = permGroupKey(perm.perm_code)
-          if (!groups[key]) {
-            groups[key] = {perm_code: key, label: '', children: []}
+          if (!buckets[key]) {
+            buckets[key] = []
             order.push(key)
           }
-          groups[key].children.push({
-            perm_code: perm.perm_code,
-            label: perm.perm_name,
-            perm_type: perm.perm_type
-          })
+          buckets[key].push(perm)
         })
-        // 组名优先取组内「页面」权限点的名称，去掉「查看」后缀更贴近菜单标题
-        order.forEach(key => {
-          const group = groups[key]
-          const page = this.permList.find(
-            perm => permGroupKey(perm.perm_code) === key && perm.perm_type === 'menu')
-          group.label = page ? page.perm_name.replace(/查看$/, '') : key
-        })
-        return order.map(key => groups[key])
+        return order.map(key => {
+          const members = buckets[key]
+          const page = members.find(perm => perm.perm_type === 'menu')
+          // 兜底：分组里没有 menu 权限点时退化成纯容器，不参与保存
+          const groupCode = page ? page.perm_code : '__group__' + key
+          return {
+            perm_code: groupCode,
+            label: page ? page.perm_name : key,
+            children: members
+              .filter(perm => perm !== page)
+              .map(perm => ({
+                perm_code: perm.perm_code,
+                label: perm.perm_name,
+                perm_type: perm.perm_type
+              }))
+          }
+        }).sort((a, b) => permMenuOrder(a.perm_code) - permMenuOrder(b.perm_code))
       },
       // 全部合法权限点编码，用于过滤已下线的历史数据
       allPermCodes() {
@@ -359,8 +551,9 @@
       userPermTree() {
         const baseline = this.roleBaselineSet
         return this.permTree
-          // 角色在这个菜单下有任何权限点（页面本身或任一按钮）就展示整组
-          .filter(group => group.children.some(child => baseline.has(child.perm_code)))
+          // 角色授予了这个菜单（或该菜单下任一按钮）就展示整组
+          .filter(group => baseline.has(group.perm_code)
+            || group.children.some(child => baseline.has(child.perm_code)))
       },
       // 超级管理员固定全部数据，范围框禁用
       isUnrestricted() {
@@ -373,6 +566,11 @@
       // 含运营角色：不配范围时默认全部数据
       defaultsToAll() {
         return this.form.role_codes.some(code => DEFAULT_ALL_ROLES.indexOf(code) > -1)
+      },
+      // 客户 / 应用候选依赖渠道或广告主范围
+      hasScopeSource() {
+        return (this.form.channel_codes || []).length > 0
+          || (this.form.advertiser_codes || []).length > 0
       }
     },
     methods: {
@@ -385,6 +583,38 @@
       },
       advertiserScopes(row) {
         return (row.data_scopes && row.data_scopes[SCOPE_ADVERTISER_CODE]) || []
+      },
+      customerScopes(row) {
+        return (row.data_scopes && row.data_scopes[SCOPE_CUSTOMER_ID]) || []
+      },
+      appScopes(row) {
+        return (row.data_scopes && row.data_scopes[SCOPE_APP_ID]) || []
+      },
+      /**
+       * 重新拉取客户 / 应用候选（随已选渠道、广告主联动）。
+       * prune=true 时丢弃已不在候选中的选中值，避免渠道换了以后残留无效范围。
+       */
+      async reloadScopeOptions(prune) {
+        try {
+          const res = await dataScopeOptions({
+            channel_codes: (this.form.channel_codes || []).join(','),
+            advertiser_codes: (this.form.advertiser_codes || []).join(',')
+          })
+          const options = (res.data && res.data.data) || {}
+          this.customerOptions = options.customer_options || []
+          this.appOptions = options.app_options || []
+          if (prune) {
+            const customerSet = new Set(this.customerOptions.map(item => item.value))
+            const appSet = new Set(this.appOptions.map(item => item.value))
+            this.form.customer_ids = (this.form.customer_ids || []).filter(v => customerSet.has(v))
+            this.form.app_ids = (this.form.app_ids || []).filter(v => appSet.has(v))
+          }
+        } catch (e) {
+          // 错误提示已由 axios 拦截器统一处理
+        }
+      },
+      onScopeChange() {
+        this.reloadScopeOptions(true)
       },
       // 用户在角色基线上的调整摘要
       overrideText(row) {
@@ -403,12 +633,9 @@
         }
         return parts.join('，')
       },
-      // 分组节点下真正的「页面」权限点（perm_type = menu）
-      pagePermOf(group) {
-        return group.children.find(child => child.perm_type === 'menu')
-      },
       /**
-       * 勾选联动：分组节点（页面）级联其下所有按钮，叶子节点交给 syncPageChecked 补页面。
+       * 勾选联动：分组节点就是菜单，勾/取消会级联其下所有按钮；
+       * 叶子（按钮）勾上时，所属菜单也要勾上。
        * check-strictly 下父子互不影响，所以这里手工补上联动。
        */
       onTreeCheck(refName, data, info) {
@@ -423,10 +650,8 @@
         this.syncPageChecked(refName)
       },
       /**
-       * 保证不变式：页内有按钮被选中时，该页面也处于选中态。
-       * 注意页面是分组下 perm_type=menu 的那个权限点，分组节点本身只是 UI 容器（伪 perm_code），
-       * 两者都要点亮 —— 前者是真正保存的权限，后者是给用户看的勾选态。
-       * 勾选、回显两条路径都要走，否则从库里读出来的数据会渲染出「按钮选着、页面没选」。
+       * 保证不变式：页内有按钮被选中时，该菜单也必须选中（按钮脱离菜单没有意义）。
+       * 勾选、回显两条路径都要走，否则从库里读出来的数据会渲染出「按钮选着、菜单没选」。
        */
       syncPageChecked(refName) {
         const tree = this.$refs[refName]
@@ -442,11 +667,9 @@
           if (!anyChildChecked) {
             return
           }
-          const page = this.pagePermOf(group)
-          if (page && checked.indexOf(page.perm_code) === -1) {
-            tree.setChecked(page.perm_code, true, false)
-          }
-          if (checked.indexOf(group.perm_code) === -1) {
+          // 纯容器分组（无 menu 权限点）不用管
+          if (this.allPermCodes.indexOf(group.perm_code) > -1
+            && checked.indexOf(group.perm_code) === -1) {
             tree.setChecked(group.perm_code, true, false)
           }
         })
@@ -511,6 +734,110 @@
           this.loading = false
         }
       },
+      openCreateDialog() {
+        this.resetCreateForm()
+        this.createVisible = true
+      },
+      resetCreateForm() {
+        this.createForm = {
+          username: '',
+          password: '',
+          role_codes: [],
+          state: 0
+        }
+      },
+      async handleCreateUser() {
+        const username = (this.createForm.username || '').trim()
+        const password = this.createForm.password || ''
+        if (!username) {
+          this.$message.warning('请输入用户名')
+          return
+        }
+        if (password.length < 8 || password.length > 16) {
+          this.$message.warning('密码长度需为 8~16 位')
+          return
+        }
+        this.creating = true
+        try {
+          await createSysUser({
+            username,
+            // 与登录流程一致：前端先 md5，后端再 bcrypt
+            password: md5(password),
+            role_codes: this.createForm.role_codes,
+            state: this.createForm.state
+          })
+          this.$message.success('添加成功')
+          this.createVisible = false
+          await this.loadData()
+        } catch (e) {
+          // 错误提示已由 axios 拦截器统一处理
+        } finally {
+          this.creating = false
+        }
+      },
+      openPasswordDialog(row) {
+        this.pwdForm = {
+          user_id: row.id,
+          username: row.username,
+          password: '',
+          confirm: ''
+        }
+        this.pwdVisible = true
+      },
+      resetPwdForm() {
+        this.pwdForm = {
+          user_id: null,
+          username: '',
+          password: '',
+          confirm: ''
+        }
+      },
+      async handleSavePassword() {
+        const password = this.pwdForm.password || ''
+        if (password.length < 8 || password.length > 16) {
+          this.$message.warning('密码长度需为 8~16 位')
+          return
+        }
+        if (password !== this.pwdForm.confirm) {
+          this.$message.warning('两次输入的密码不一致')
+          return
+        }
+        this.savingPwd = true
+        try {
+          await saveUserPassword({
+            user_id: this.pwdForm.user_id,
+            // 与登录流程一致：前端先 md5，后端再 bcrypt
+            password: md5(password)
+          })
+          this.$message.success('密码修改成功')
+          this.pwdVisible = false
+        } catch (e) {
+          // 错误提示已由 axios 拦截器统一处理
+        } finally {
+          this.savingPwd = false
+        }
+      },
+      async handleDeleteUser(row) {
+        if (row.username === this.currentUsername) {
+          this.$message.warning('不能删除当前登录用户')
+          return
+        }
+        try {
+          await this.$confirm(
+            `确定删除用户「${row.username}」吗？其角色、数据范围和页面权限配置会一并删除。`,
+            '删除用户',
+            {type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消'})
+        } catch (e) {
+          return
+        }
+        try {
+          await deleteSysUser(row.id)
+          this.$message.success('删除成功')
+          await this.loadData()
+        } catch (e) {
+          // 错误提示已由 axios 拦截器统一处理
+        }
+      },
       openEditDialog(row) {
         const scopes = row.data_scopes || {}
         const overrides = row.perm_overrides || {}
@@ -520,11 +847,15 @@
           role_codes: (row.role_codes || []).slice(),
           channel_codes: (scopes[SCOPE_CHANNEL_CODE] || []).slice(),
           advertiser_codes: (scopes[SCOPE_ADVERTISER_CODE] || []).slice(),
+          customer_ids: (scopes[SCOPE_CUSTOMER_ID] || []).slice(),
+          app_ids: (scopes[SCOPE_APP_ID] || []).slice(),
           grants: (overrides.grants || []).slice(),
           denies: (overrides.denies || []).slice()
         }
         this.dialogVisible = true
         this.$nextTick(() => this.applyUserChecked(this.form.denies))
+        // 按该用户已选的渠道/广告主拉取客户与应用候选（不裁剪已存值）
+        this.reloadScopeOptions(false)
       },
       closeDialog() {
         this.form = {
@@ -533,9 +864,13 @@
           role_codes: [],
           channel_codes: [],
           advertiser_codes: [],
+          customer_ids: [],
+          app_ids: [],
           grants: [],
           denies: []
         }
+        this.customerOptions = []
+        this.appOptions = []
       },
       // 保存用户权限：角色 + 数据范围 + 页面权限增量（勾选态反推差异）
       async handleSave() {
@@ -551,7 +886,9 @@
           // 超级管理员忽略范围，清空避免日后降级时残留
           const scopes = this.isUnrestricted ? {} : {
             [SCOPE_CHANNEL_CODE]: this.form.channel_codes,
-            [SCOPE_ADVERTISER_CODE]: this.form.advertiser_codes
+            [SCOPE_ADVERTISER_CODE]: this.form.advertiser_codes,
+            [SCOPE_CUSTOMER_ID]: this.form.customer_ids,
+            [SCOPE_APP_ID]: this.form.app_ids
           }
           await saveUserDataScope({user_id: this.form.user_id, scopes})
           await saveUserPermission({
@@ -610,6 +947,10 @@
     background-color: #fff;
     border-radius: 4px;
     padding: 16px 20px;
+  }
+
+  .user-toolbar {
+    margin-bottom: 12px;
   }
 
   .perm-tag {

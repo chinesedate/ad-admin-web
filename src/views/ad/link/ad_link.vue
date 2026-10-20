@@ -30,7 +30,7 @@
             </el-input>
           </el-form-item>
           <el-form-item class="pick-form-item">
-            <el-button type="primary" @click="activeAdLinkAdd">添加链接</el-button>
+            <el-button v-permission="'adv_link:edit'" type="primary" @click="activeAdLinkAdd">添加链接</el-button>
           </el-form-item>
         </el-form>
         <el-table
@@ -76,7 +76,7 @@
               <el-button class="adv-link-operate-button" type="primary" size="mini"
                          @click="modifyLinkDetail(scope.row.id)">详情
               </el-button>
-              <el-popconfirm title="确定删除吗？" @confirm="handleAdvLinkRemove(scope.row)">
+              <el-popconfirm v-permission="'adv_link:edit'" title="确定删除吗？" @confirm="handleAdvLinkRemove(scope.row)">
                 <template #reference>
                   <el-button class="adv-link-operate-button" type="danger" size="mini">删除</el-button>
                 </template>

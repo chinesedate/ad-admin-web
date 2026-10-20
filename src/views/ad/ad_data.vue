@@ -138,7 +138,7 @@
             </el-button>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="handleDataExport" plain>数据导出</el-button>
+            <el-button v-permission="'ad_data:export'" type="primary" @click="handleDataExport" plain>数据导出</el-button>
           </el-form-item>
         </el-form>
         <div class="column-selector-wrapper">
