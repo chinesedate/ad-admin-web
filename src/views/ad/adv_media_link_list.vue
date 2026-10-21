@@ -375,7 +375,6 @@
         }
         const parts = [
           this.monitorRow.app_name,
-          this.monitorRow.adv_channel_name,
           this.monitorRow.channel_name
         ].filter(Boolean)
         return parts.length ? parts.join(' · ') : `媒体链接 #${this.monitorRow.id}`
