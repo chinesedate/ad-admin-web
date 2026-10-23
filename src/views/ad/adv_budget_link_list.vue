@@ -297,6 +297,24 @@
               callback()
             },
             trigger: 'blur'
+          }],
+          click_link: [{
+            validator: (rule, value, callback) => {
+              if (this.form.channel_code === 'ainian') {
+                const raw = (value || '').trim()
+                if (!raw) {
+                  callback(new Error('请粘贴爱念监测链接'))
+                  return
+                }
+                const oid = this.extractQueryParam(raw, 'oid')
+                if (!oid || this.isLinkMacro(oid)) {
+                  callback(new Error('链接中须包含 oid'))
+                  return
+                }
+              }
+              callback()
+            },
+            trigger: 'blur'
           }]
         }
       }
@@ -343,6 +361,8 @@
           inteyun: '不填则按 adId__channelId',
           zhijie: '不填则按 ckey',
           heimi: '不填则按 channel_pkg 或 did',
+          ainian: '不填则按 channel_pkg 或 oid',
+          juedui: '不填则按 channel_pkg 或 mainsn__channel_id',
           doujing: '不填则按 djMtId 或 djMtId__djPt',
           chengtou: '不填则按 offer_id__aff_id__ads_code',
           wanmob: '不填则按 product_id',
@@ -758,8 +778,26 @@
         }
         this.form.link_code = adid + '_' + channelid
       },
+      syncAinianLinkCode() {
+        if (this.form.channel_code !== 'ainian') {
+          return
+        }
+        if ((this.form.link_code || '').trim()) {
+          return
+        }
+        const channelPkg = this.extractQueryParam(this.form.click_link, 'channel_pkg')
+        const oid = this.extractQueryParam(this.form.click_link, 'oid')
+        if (channelPkg && !this.isLinkMacro(channelPkg)) {
+          this.form.link_code = channelPkg
+          return
+        }
+        if (oid && !this.isLinkMacro(oid)) {
+          this.form.link_code = oid
+        }
+      },
       syncDerivedLinkCode() {
         this.syncShirui2LinkCode()
+        this.syncAinianLinkCode()
         this.syncNingzhiLinkCode()
         this.syncSoulLinkCode()
         this.syncTaquLinkCode()
