@@ -58,10 +58,10 @@
               <span class="ellipsis-link">{{advLinkInfo.download_link || '-'}}</span>
             </el-form-item>
             <el-form-item class="adv-link-form-item" label="点击链接：">
-              <span>{{advLinkInfo.click_link || '-'}}</span>
+              <span class="ellipsis-link">{{advLinkInfo.click_link || '-'}}</span>
             </el-form-item>
             <el-form-item class="adv-link-form-item" label="曝光链接：">
-              <span>{{advLinkInfo.show_link || '-'}}</span>
+              <span class="ellipsis-link">{{advLinkInfo.show_link || '-'}}</span>
             </el-form-item>
             <el-form-item class="adv-link-form-item" label="备注信息：">
               <span>{{advLinkInfo.extra_info || '-'}}</span>
@@ -1143,15 +1143,22 @@
         margin-bottom: 0;
       }
     }
+
+    .adv-link-form-item {
+      ::v-deep .el-form-item__content {
+        min-width: 0;
+        overflow: visible;
+      }
+    }
   }
 
   .ellipsis-link {
     display: inline-block;
-    width: 90%;
-    word-wrap: break-word; /* 允许长单词换行 */
-    word-break: break-all; /* 允许在任意字符间换行 */
-    white-space: normal; /* 允许换行（关键：不是 nowrap） */
-    line-height: 1.5; /* 行高 */
+    width: 100%;
+    word-wrap: break-word;
+    word-break: break-all;
+    white-space: normal;
+    line-height: 1.5;
   }
 
   .audit-tool-list-content {

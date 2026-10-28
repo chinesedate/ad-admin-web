@@ -100,7 +100,7 @@
       width="820px"
       :close-on-click-modal="false"
       @close="closeDialog">
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
+      <el-form ref="formRef" class="budget-link-form" :model="form" :rules="rules" label-width="130px">
         <el-form-item label="广告主：" prop="channel_code">
           <el-select
             v-model="form.channel_code"
@@ -133,6 +133,9 @@
         </el-form-item>
         <el-form-item v-if="form.channel_code === 'junbo'" label="adId：" prop="junbo_ad_id">
           <el-input v-model="form.junbo_ad_id" maxlength="100" placeholder="请输入预算 adId，点击上报写入骏伯 adId"/>
+        </el-form-item>
+        <el-form-item v-if="form.channel_code === 'youdao'" label="developer_id：" prop="youdao_developer_id">
+          <el-input v-model="form.youdao_developer_id" maxlength="100" :placeholder="'默认 ' + youdaoDefaultDeveloperId"/>
         </el-form-item>
         <el-form-item label="下载链接：" prop="download_link">
           <el-input v-model="form.download_link" maxlength="2000" placeholder="选填"/>
@@ -248,8 +251,10 @@
           param_values: [],
           wanmob_event_type: 1,
           bohai_pack_id: '',
-          junbo_ad_id: ''
+          junbo_ad_id: '',
+          youdao_developer_id: ''
         },
+        youdaoDefaultDeveloperId: '381d8c4cc109487d',
         rules: {
           channel_code: [{required: true, message: '请选择广告主', trigger: 'change'}],
           os_type: [{required: true, message: '请选择系统类型', trigger: 'change'}],
@@ -716,10 +721,31 @@
         if (this.form.channel_code !== 'youdao') {
           return
         }
+        const developerId = this.extractQueryParam(this.form.click_link, 'developer_id')
+        if (developerId && !this.isLinkMacro(developerId)) {
+          this.form.youdao_developer_id = developerId
+        } else if (!(this.form.youdao_developer_id || '').trim()) {
+          this.form.youdao_developer_id = this.youdaoDefaultDeveloperId
+        }
+        const redirect = this.extractQueryParam(this.form.click_link, 'redirect')
+        const aid = this.extractQueryParam(this.form.click_link, 'aid')
+        const values = []
+        if (aid && !this.isLinkMacro(aid)) {
+          values.push({param_name: 'aid', param_value: aid})
+        }
+        values.push({
+          param_name: 'developer_id',
+          param_value: (this.form.youdao_developer_id || '').trim() || this.youdaoDefaultDeveloperId
+        })
+        if (redirect && !this.isLinkMacro(redirect)) {
+          values.push({param_name: 'redirect', param_value: redirect})
+        }
+        if (values.length) {
+          this.form.param_values = values
+        }
         if ((this.form.link_code || '').trim()) {
           return
         }
-        const aid = this.extractQueryParam(this.form.click_link, 'aid')
         if (this.isLinkMacro(aid)) {
           return
         }
@@ -918,7 +944,8 @@
           param_values: [],
           wanmob_event_type: 1,
           bohai_pack_id: '',
-          junbo_ad_id: ''
+          junbo_ad_id: '',
+          youdao_developer_id: ''
         }
         this.linkParamHint = []
       },
@@ -949,6 +976,13 @@
         }
         if (channelCode !== 'junbo') {
           this.form.junbo_ad_id = ''
+        }
+        if (channelCode === 'youdao') {
+          if (!(this.form.youdao_developer_id || '').trim()) {
+            this.form.youdao_developer_id = this.youdaoDefaultDeveloperId
+          }
+        } else {
+          this.form.youdao_developer_id = ''
         }
         if (channelCode === 'meituan') {
           this.syncMeituanMonitor()
@@ -988,6 +1022,11 @@
             bohai_pack_id: isBohai ? bohaiFields.bohaiPackId : '',
             junbo_ad_id: data.channel_code === 'junbo'
               ? (((data.param_values || []).find(item => item.param_name === 'adId') || {}).param_value || '')
+              : '',
+            youdao_developer_id: data.channel_code === 'youdao'
+              ? ((((data.param_values || []).find(item => item.param_name === 'developer_id') || {}).param_value
+                || ((data.param_values || []).find(item => item.param_name === 'did') || {}).param_value
+                || this.youdaoDefaultDeveloperId))
               : ''
           }
           this.loadLinkParamHint(data.channel_code)
@@ -1037,6 +1076,9 @@
         }
         if (this.form.channel_code === 'junbo') {
           payload.ad_id = (this.form.junbo_ad_id || '').trim()
+        }
+        if (this.form.channel_code === 'youdao') {
+          payload.developer_id = (this.form.youdao_developer_id || '').trim() || this.youdaoDefaultDeveloperId
         }
         return payload
       },
@@ -1098,6 +1140,12 @@
 
   .pick-form-inline {
     padding: 0 10px;
+  }
+
+  .budget-link-form {
+    ::v-deep .el-form-item__label {
+      white-space: nowrap;
+    }
   }
 
   .pick-form-item {
