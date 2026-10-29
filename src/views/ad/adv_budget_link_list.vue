@@ -384,6 +384,7 @@
           xiaohongshu: '不填则按点击链接 xhs_channel',
           xuanyi: '不填则按点击链接 pid',
           xuchao2: '不填则按点击链接 offer_id',
+          xuchao3: '不填则按点击链接 ckey',
           yanxin: '不填则按点击链接 fid',
           keshuo2: '不填则按点击链接 channel_id',
           xuri: '不填则按点击链接 channel',
@@ -678,6 +679,19 @@
         }
         this.form.link_code = offerId
       },
+      syncXuchao3LinkCode() {
+        if (this.form.channel_code !== 'xuchao3') {
+          return
+        }
+        if ((this.form.link_code || '').trim()) {
+          return
+        }
+        const ckey = this.extractQueryParam(this.form.click_link, 'ckey')
+        if (this.isLinkMacro(ckey)) {
+          return
+        }
+        this.form.link_code = ckey
+      },
       syncYanxinLinkCode() {
         if (this.form.channel_code !== 'yanxin') {
           return
@@ -834,6 +848,7 @@
         this.syncXiaohongshuLinkCode()
         this.syncXuanyiLinkCode()
         this.syncXuchao2LinkCode()
+        this.syncXuchao3LinkCode()
         this.syncYanxinLinkCode()
         this.syncKeshuo2LinkCode()
         this.syncXuriLinkCode()
