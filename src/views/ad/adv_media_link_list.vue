@@ -98,13 +98,13 @@
           <el-table-column label="操作" width="210" align="center" class-name="adv-media-op-col">
             <template #default="scope">
               <el-tooltip content="监测" placement="top">
-                <el-button type="primary" size="mini" icon="el-icon-view" circle class="adv-link-operate-button" @click="openMonitorDialog(scope.row)"/>
+                <el-button type="success" size="mini" icon="el-icon-view" circle class="adv-link-operate-button" @click="openMonitorDialog(scope.row)"/>
               </el-tooltip>
               <el-tooltip content="广告主链接" placement="top">
                 <el-button type="primary" size="mini" icon="el-icon-link" circle class="adv-link-operate-button" @click="goAdvLinkDetail(scope.row)"/>
               </el-tooltip>
               <el-tooltip v-if="isDebugMedia(scope.row.channel_code)" v-permission="'media_debug'" content="联调" placement="top">
-                <el-button type="primary" size="mini" icon="el-icon-s-promotion" circle class="adv-link-operate-button" @click="goDebug(scope.row)"/>
+                <el-button type="warning" size="mini" icon="el-icon-s-promotion" circle class="adv-link-operate-button" @click="goDebug(scope.row)"/>
               </el-tooltip>
               <el-tooltip v-permission="'media_link:edit'" content="编辑" placement="top">
                 <el-button type="primary" size="mini" icon="el-icon-edit" circle class="adv-link-operate-button" @click="openEditDialog(scope.row)"/>
