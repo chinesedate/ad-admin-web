@@ -395,3 +395,43 @@ export function removeAppShowDataSupply(id) {
     method: 'delete'
   })
 }
+
+export function fetchBudgetReportOptions(data) {
+  return request({
+    url: '/track/admin/budget-report-options',
+    method: 'post',
+    data
+  })
+}
+
+export function pageListBudgetReport(data) {
+  return request({
+    url: '/track/admin/budget-report-list',
+    method: 'post',
+    data
+  })
+}
+
+export function listBudgetReportAlert() {
+  return request({
+    url: '/track/admin/budget-report-alert-list',
+    method: 'post',
+    data: {}
+  })
+}
+
+export function saveBudgetReportAlert(data) {
+  return request({
+    url: '/track/admin/budget-report-alert-save',
+    method: 'post',
+    data
+  })
+}
+
+export function deleteBudgetReportAlert(data) {
+  return request({
+    url: '/track/admin/budget-report-alert-delete',
+    method: 'post',
+    data
+  })
+}

@@ -56,6 +56,24 @@ const routes = [
     }
   },
   {
+    path: '/budget_report',
+    component: Layout,
+    children: [
+      {
+        path: '',
+        name: 'BudgetReport',
+        component: () => import('@/views/ad/budget_report.vue')
+      }
+    ],
+    props: {
+      menuIndex: 'budget-report'
+    },
+    meta: {
+      title: '上报状态',
+      permission: 'ad_data:list'
+    }
+  },
+  {
     path: '/honor_supplement',
     component: Layout,
     children: [

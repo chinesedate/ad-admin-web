@@ -8,12 +8,25 @@
  */
 export const menus = [
   {
-    index: 'ad-data',
-    title: '广告数据',
+    index: 'data-report',
+    title: '数据报表',
     icon: 'el-icon-s-data',
-    path: '/ad_data',
-    permission: 'ad_data:list',
-    prefixes: ['/', '/ad_data']
+    children: [
+      {
+        index: 'ad-data',
+        title: '广告数据',
+        path: '/ad_data',
+        permission: 'ad_data:list',
+        prefixes: ['/', '/ad_data']
+      },
+      {
+        index: 'budget-report',
+        title: '上报状态',
+        path: '/budget_report',
+        permission: 'ad_data:list',
+        prefixes: ['/budget_report']
+      }
+    ]
   },
   {
     index: 'ad-link',

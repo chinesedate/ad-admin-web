@@ -407,9 +407,15 @@
     if (MENU_ORDER_IGNORE[menu.index]) {
       return
     }
-    if (menu.permission && MENU_ORDER[menu.permission] === undefined) {
-      MENU_ORDER[menu.permission] = index
-    }
+    const items = menu.children && menu.children.length ? menu.children : [menu]
+    items.forEach(item => {
+      if (MENU_ORDER_IGNORE[item.index]) {
+        return
+      }
+      if (item.permission && MENU_ORDER[item.permission] === undefined) {
+        MENU_ORDER[item.permission] = index
+      }
+    })
   })
 
   function permMenuOrder(permCode) {
