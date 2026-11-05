@@ -714,6 +714,10 @@
         for (const item of this.monitorLinkItems) {
           lines.push(`${item.label}：${item.value || '—'}`)
         }
+        const remark = ((this.monitorRow && this.monitorRow.extra_info) || '').trim()
+        if (remark) {
+          lines.push(`备注：${remark}`)
+        }
         return lines.join('\n')
       },
       copyAllMonitorContent() {
