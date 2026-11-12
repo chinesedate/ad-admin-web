@@ -366,6 +366,7 @@
           inteyun: '不填则按 adId__channelId',
           zhijie: '不填则按 ckey',
           heimi: '不填则按 channel_pkg 或 did',
+          juxin: '不填则按 campaign_id',
           ainian: '不填则按 channel_pkg 或 oid',
           juedui: '不填则按 channel_pkg 或 mainsn__channel_id',
           doujing: '不填则按 djMtId 或 djMtId__djPt',
