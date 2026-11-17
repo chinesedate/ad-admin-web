@@ -324,6 +324,19 @@
     adv_id: '广告主id'
   }
 
+  // 参数字典展示顺序：adv_id 排在 src_id 上面
+  function sortMediaParams(params) {
+    const list = (params || []).slice()
+    const advIndex = list.findIndex(item => item.param_name === 'adv_id')
+    const srcIndex = list.findIndex(item => item.param_name === 'src_id')
+    if (advIndex < 0 || srcIndex < 0 || advIndex < srcIndex) {
+      return list
+    }
+    const [advParam] = list.splice(advIndex, 1)
+    list.splice(list.findIndex(item => item.param_name === 'src_id'), 0, advParam)
+    return list
+  }
+
   export default {
     name: 'adv_media_link_list',
     data() {
@@ -448,7 +461,7 @@
         }
         fetchMediaLinkParam(channelCode).then(res => {
           const data = res.data.data
-          const params = (data && data.params) ? data.params.filter(item => Number(item.is_active) === 0) : []
+          const params = sortMediaParams((data && data.params) ? data.params.filter(item => Number(item.is_active) === 0) : [])
           this.linkParamHint = params
           this.linkParamFields = this.buildParamFields(params, existingValues)
         }).catch(() => {
@@ -470,6 +483,17 @@
             param_value: this.normalizeMediaParamValue(item.param_name, item.param_value)
           }))
           .filter(item => item.param_name && item.param_value)
+      },
+      firstMissingRequiredParam(fields) {
+        for (const item of fields || []) {
+          if (Number(item.param_required) !== 0) {
+            continue
+          }
+          if (!this.normalizeMediaParamValue(item.param_name, item.param_value)) {
+            return item.param_name
+          }
+        }
+        return ''
       },
       formatConversionRateLabel(row) {
         const conversionRate = row.conversion_rate
@@ -563,6 +587,7 @@
           if (data != null) {
             this.tableData = (data.list || []).map(row => ({
               ...row,
+              param_values: sortMediaParams(row.param_values),
               conversion_rate_label: this.formatConversionRateLabel(row)
             }))
             this.total = data.total || 0
@@ -654,6 +679,14 @@
         const force = forceDebugOff === true
         this.$refs.formRef.validate(valid => {
           if (!valid) {
+            return
+          }
+          const missingParam = this.firstMissingRequiredParam(this.linkParamFields)
+          if (missingParam) {
+            const label = MEDIA_PARAM_COMMENT[missingParam]
+              ? missingParam + '（' + MEDIA_PARAM_COMMENT[missingParam] + '）'
+              : missingParam
+            this.$message.warning('请填写必填参数：' + label)
             return
           }
           this.submitLoading = true

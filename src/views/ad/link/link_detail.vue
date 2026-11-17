@@ -537,6 +537,19 @@
     adv_id: '广告主id'
   }
 
+  // 参数字典展示顺序：adv_id 排在 src_id 上面
+  function sortMediaParams(params) {
+    const list = (params || []).slice()
+    const advIndex = list.findIndex(item => item.param_name === 'adv_id')
+    const srcIndex = list.findIndex(item => item.param_name === 'src_id')
+    if (advIndex < 0 || srcIndex < 0 || advIndex < srcIndex) {
+      return list
+    }
+    const [advParam] = list.splice(advIndex, 1)
+    list.splice(list.findIndex(item => item.param_name === 'src_id'), 0, advParam)
+    return list
+  }
+
   export default {
     name: "LinkDetail",
     props: {
@@ -726,7 +739,7 @@
         }
         fetchMediaLinkParam(channelCode).then(res => {
           const data = res.data.data
-          const params = (data && data.params) ? data.params.filter(item => Number(item.is_active) === 0) : []
+          const params = sortMediaParams((data && data.params) ? data.params.filter(item => Number(item.is_active) === 0) : [])
           this.mediaLinkParamHint = params
           this.mediaLinkParamFields = this.buildMediaParamFields(params, existingValues)
         }).catch(() => {
@@ -742,7 +755,7 @@
         }
         fetchMediaLinkParam(channelCode).then(res => {
           const data = res.data.data
-          const params = (data && data.params) ? data.params.filter(item => Number(item.is_active) === 0) : []
+          const params = sortMediaParams((data && data.params) ? data.params.filter(item => Number(item.is_active) === 0) : [])
           this.mediaLinkModifyParamHint = params
           this.mediaLinkModifyParamFields = this.buildMediaParamFields(params, existingValues)
         }).catch(() => {
@@ -767,6 +780,28 @@
             param_value: this.normalizeMediaParamValue(item.param_name, item.param_value)
           }))
           .filter(item => item.param_name && item.param_value)
+      },
+      firstMissingRequiredParam(paramFields) {
+        for (const item of paramFields || []) {
+          if (Number(item.param_required) !== 0) {
+            continue
+          }
+          if (!this.normalizeMediaParamValue(item.param_name, item.param_value)) {
+            return item.param_name
+          }
+        }
+        return ''
+      },
+      warnMissingRequiredParam(paramFields) {
+        const missingParam = this.firstMissingRequiredParam(paramFields)
+        if (!missingParam) {
+          return false
+        }
+        const label = MEDIA_PARAM_COMMENT[missingParam]
+          ? missingParam + '（' + MEDIA_PARAM_COMMENT[missingParam] + '）'
+          : missingParam
+        this.$message.warning('请填写必填参数：' + label)
+        return true
       },
       /**
        * 折叠面板展开或收起触发
@@ -863,6 +898,9 @@
           if (!valid) {
             return false
           }
+          if (this.warnMissingRequiredParam(this.mediaLinkParamFields)) {
+            return false
+          }
           const adv_link_info = {
             adv_link_id: this.linkId,
             channel_code: this.media_link_form.channel_code,
@@ -890,6 +928,9 @@
       handleMediaLinkModify() {
         this.$refs.mediaFormModifyRef.validate(valid => {
           if (!valid) {
+            return false
+          }
+          if (this.warnMissingRequiredParam(this.mediaLinkModifyParamFields)) {
             return false
           }
           const media_link_info = {
@@ -1005,6 +1046,7 @@
             if (res.data.data != null) {
               this.tableData = res.data.data.list;
               for (const media_link of this.tableData) {
+                media_link.param_values = sortMediaParams(media_link.param_values);
                 const conversion_rate = media_link.conversion_rate;
                 const rate_min_limit = media_link.rate_min_limit;
                 const rate_min_limit_num = media_link.rate_min_limit_num;
