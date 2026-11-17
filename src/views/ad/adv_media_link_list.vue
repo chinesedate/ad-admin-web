@@ -279,6 +279,10 @@
           <div class="monitor-link-label">{{ item.label }}：</div>
           <div class="monitor-link-text">{{ item.value || '—' }}</div>
         </div>
+        <div v-if="monitorRemark" class="monitor-link-block">
+          <div class="monitor-link-label">备注：</div>
+          <div class="monitor-link-text">{{ monitorRemark }}</div>
+        </div>
       </div>
       <span slot="footer" class="dialog-footer">
         <el-button @click="monitorDialogVisible = false">取消</el-button>
@@ -378,6 +382,9 @@
           this.monitorRow.channel_name
         ].filter(Boolean)
         return parts.length ? parts.join(' · ') : `媒体链接 #${this.monitorRow.id}`
+      },
+      monitorRemark() {
+        return ((this.monitorRow && this.monitorRow.extra_info) || '').trim()
       },
       monitorLinkItems() {
         if (!this.monitorRow) {
@@ -714,7 +721,7 @@
         for (const item of this.monitorLinkItems) {
           lines.push(`${item.label}：${item.value || '—'}`)
         }
-        const remark = ((this.monitorRow && this.monitorRow.extra_info) || '').trim()
+        const remark = this.monitorRemark
         if (remark) {
           lines.push(`备注：${remark}`)
         }
