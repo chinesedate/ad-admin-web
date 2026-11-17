@@ -320,7 +320,8 @@
     token: '令牌',
     app_key: '应用标识',
     client_id: '客户id',
-    corp_id: '广告主标识'
+    corp_id: '广告主标识',
+    adv_id: '广告主id'
   }
 
   export default {
