@@ -408,7 +408,7 @@
         const deliveryLink = (row.download_link || '').trim()
         const deliveryLabel = this.isDeeplink(deliveryLink) ? 'Deeplink 链接' : '投放链接'
         return [
-          {key: 'show', label: '展示监测链接', value: (row.show_link || '').trim()},
+          {key: 'show', label: '曝光监测链接', value: (row.show_link || '').trim()},
           {key: 'click', label: '点击监测链接', value: (row.click_link || '').trim()},
           {key: 'delivery', label: deliveryLabel, value: deliveryLink}
         ]
